@@ -6,11 +6,11 @@ This public repository allows access to the detailed weather data collected by t
 
 - [Weather station network details](#network): A general overview of the weather station network established in Ngorongoro Crater, including station locations, data collection frequency and variables measured.
 
-[Recent report](#report): The most recent .pdf report summarising weather patterns and trends in Ngorongoro Crater since weather data collection began in September, 2021. This is intended as a high-level summary of weather patterns that may be used by managers and decision makers.
+- [Recent report](#report): The most recent .pdf report summarising weather patterns and trends in Ngorongoro Crater since weather data collection began in September, 2021. This is intended as a high-level summary of weather patterns that may be used by managers and decision makers.
 
-[Summary data](#summarydata): Daily summary data from all stations within the weather data network.
+- [Summary data](#summarydata): Daily summary data from all stations within the weather data network.
 
-[Raw data](#rawdata): Full high-frequency weather dataset.
+- [Raw data](#rawdata): Full high-frequency weather dataset.
 
 <a name="network"/>
 
