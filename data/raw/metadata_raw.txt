@@ -1,0 +1,22 @@
+####################################################
+File meta-data
+####################################################
+File: Ngorongoro Hyena Project weather data raw
+Date: 2021/09/30 - 2022/11/10
+
+
+####################################################
+Column description
+####################################################
+station_name: Name of solar powered logger device used to store data. Currently, each station is only found at one site but this could change in future.
+site_name: Location at which station is installed.
+date_time: Date-time of data collection in East Africa Time (UTC+3).
+latitude: Latitude in decimal degrees.
+longitude: Longitude in decimal degrees.
+period: Time period of continous data collection. Some sites will experience breaks in data collection due to mantainance or damage.
+air_temp: Air temperature in centigrade.
+precip: Total precipitation in mm.
+precip_max_hourly: Maximum rate of precipitation (mm/hour). Maximum precipitation can be used to account for uncertainty in tipping bucket rain gauges.
+relative_humidity: Relative humidity.
+atmospheric_pressure: Atmospheric pressure in kPa
+battery_percentage: Battery percentage of the station data logger. Data collected when station has low battery power may be unreliable.
