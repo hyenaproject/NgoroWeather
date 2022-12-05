@@ -38,7 +38,7 @@ Citation (order to be figured out + title to be figured out): Bailey LD, Philemo
 
 ## Summary data
 
-Daily average weather data is available [here](data/summary/weatherdata_summary_2022-12-05.csv).
+Daily average weather data is available [here](data/summary).
 
 When using or referencing the Ngorongoro Crater Weather Data in part or in whole, please credit members of the Ngorongoro Hyena Project (should we add also Dismas and Donatus, our local contacts?) who are responsible for the funding, installation, and maintenance of the four weather stations and for the curation of the data, as follows.
 
@@ -48,7 +48,7 @@ Citation (order to be figured out + title to be figured out): Bailey LD, Philemo
 
 ## Raw data
 
-High-frequency (30 minute) weather data is available [here](data/raw/weatherdata_raw_2022-12-05.csv).
+High-frequency (30 minute) weather data is available [here](data/raw).
 
 When using or referencing the Ngorongoro Crater Weather Data in part or in whole, please credit members of the Ngorongoro Hyena Project (should we add also Dismas and Donatus, our local contacts?) who are responsible for the funding, installation, and maintenance of the four weather stations and for the curation of the data, as follows.
 
