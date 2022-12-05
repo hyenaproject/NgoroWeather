@@ -18,40 +18,40 @@ This public repository allows access to the detailed weather data collected by t
 
 The weather station run by Ngorongoro Hyena project includes 4 weather station sites within the Ngorongoro Conservation Area. 3 of these sites are found on the Crater floor and 1 on the Crater rim (Fig. 1).
 
-!! ADD MAP !!
+![](img/station_map.png)
 
 All stations include a temperature sensor and and tipping bucket rain gauge. Technical specifications are described below and also included in the report.
 
-!! ADD TABLE WITH TECHNICAL SPECS !!
+![](img/specs.png)
 
 <a name="report"/>
 
 ## Recent report
 
-The most recent weather data report from !! ADD DATE HERE !! is availabe at !! ADD LINK HERE !!. This report is intended as a general summary of weather patterns and trends for managers and decision makers.
+The most recent weather data report is available [here](report/NCAA_weather_report_Hyena_Project.pdf). This report is intended as a general summary of weather patterns and trends for managers and decision makers.
 
 When using or referencing the Ngorongoro Crater Weather Report, please credit the members of the Ngorongoro Hyena Project who have compiled the data and generated the report, and cite as follows:
 
-Citation (order to be figured out + title to be figured out): Bailey LD, Philemon Naman, Oltumo L, Courtiol A, Davidian E, Höner OP. 2022 Ngorongoro Crater Weather Report: Graphical representation of the trends in temperature, rainfall and atmospheric pressure in the Ngorongoro Crater, Tanzania. Downloaded on [date] from https://xxx.
+Citation (order to be figured out + title to be figured out): Bailey LD, Philemon Naman, Oltumo L, Courtiol A, Davidian E, Höner OP. 2022 Ngorongoro Crater Weather Report: Graphical representation of the trends in temperature, rainfall and atmospheric pressure in the Ngorongoro Crater, Tanzania. Downloaded on [date] from https://github.com/hyenaproject/NgoroWeather.
 
 <a name="summarydata"/>
 
 ## Summary data
 
-Daily average weather data from !! START DATE !! - !! END DATE !! is available at !! ADD LINK HERE !!.
+Daily average weather data is available [here](data/summary/weatherdata_summary_2022-12-05.csv).
 
 When using or referencing the Ngorongoro Crater Weather Data in part or in whole, please credit members of the Ngorongoro Hyena Project (should we add also Dismas and Donatus, our local contacts?) who are responsible for the funding, installation, and maintenance of the four weather stations and for the curation of the data, as follows.
 
-Citation (order to be figured out + title to be figured out): Bailey LD, Philemon Naman, Oltumo L, Courtiol A, Davidian E, Höner OP. 2022 Ngorongoro Crater Weather Data: Temperature, rainfall and atmospheric pressure in the Ngorongoro Crater, Tanzania. Downloaded on [date] from https://xxx.
+Citation (order to be figured out + title to be figured out): Bailey LD, Philemon Naman, Oltumo L, Courtiol A, Davidian E, Höner OP. 2022 Ngorongoro Crater Weather Data: Temperature, rainfall and atmospheric pressure in the Ngorongoro Crater, Tanzania. Downloaded on [date] from https://github.com/hyenaproject/NgoroWeather.
 
 <a name="rawdata"/>
 
 ## Raw data
 
-High-frequency (30 minute) weather data from !! START DATE !! - !! END DATE !! is available at !! ADD LINK HERE !!.
+High-frequency (30 minute) weather data is available [here](data/raw/weatherdata_raw_2022-12-05.csv).
 
 When using or referencing the Ngorongoro Crater Weather Data in part or in whole, please credit members of the Ngorongoro Hyena Project (should we add also Dismas and Donatus, our local contacts?) who are responsible for the funding, installation, and maintenance of the four weather stations and for the curation of the data, as follows.
 
-Citation (order to be figured out + title to be figured out): Bailey LD, Philemon Naman, Oltumo L, Courtiol A, Davidian E, Höner OP. 2022 Ngorongoro Crater Weather Data: Temperature, rainfall and atmospheric pressure in the Ngorongoro Crater, Tanzania. Downloaded on [date] from https://xxx.
+Citation (order to be figured out + title to be figured out): Bailey LD, Philemon Naman, Oltumo L, Courtiol A, Davidian E, Höner OP. 2022 Ngorongoro Crater Weather Data: Temperature, rainfall and atmospheric pressure in the Ngorongoro Crater, Tanzania. Downloaded on [date] from https://github.com/hyenaproject/NgoroWeather.
 
 
