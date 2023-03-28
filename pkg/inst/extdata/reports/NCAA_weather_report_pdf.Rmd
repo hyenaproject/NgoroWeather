@@ -72,7 +72,7 @@ raw_data <- create_weather_raw.table(input.folder = system.file("extdata/working
                                                                   package = "NgoroWeather"))
 
 input_data <- raw_data$data[[1]] |> 
-  mutate(date_time = paste(date, time, sep = " "))
+  mutate(date_time = lubridate::ymd_hms(paste(date, time, sep = " ")))
 
 start_date <- min(lubridate::as_date(input_data$date_time))
 end_date   <- max(lubridate::as_date(input_data$date_time))
@@ -192,13 +192,13 @@ crater_contours <- hyenaR::sf_hyenaR$crater_contours
 station_points <- weather_station_activity %>% 
   bind_cols(sf::st_coordinates(.))
 
-lakes <- hyneaR::sf_hyenaR$waterbodies_lakes
+lakes <- hyenaR::sf_hyenaR$waterbodies_lakes
 
 #Only show roads INSIDE the crater
-roads <- hyneaR::sf_hyenaR$roads_crater %>% 
+roads <- hyenaR::sf_hyenaR$roads_crater %>% 
   sf::st_crop(crater_rim)
 
-rivers <- hyneaR::sf_hyenaR$rivers_all %>% 
+rivers <- hyenaR::sf_hyenaR$rivers_all %>% 
   sf::st_crop(crater_rim)
 
 ggplot() +
@@ -206,7 +206,7 @@ ggplot() +
   geom_sf(data = crater_contours, fill = "#FFF2AF", alpha = 0.25) +
   geom_sf(data = lakes, fill = "#AADAFF", colour = NA) +
   geom_sf(data = station_points, colour = "red") +
-  geom_text(data = station_points, aes(x = X, y = Y + 0.0075, label = toupper(location)),
+  geom_text(data = station_points, aes(x = X, y = Y + 0.0075, label = toupper(site_name)),
             family = "Montserrat500", fontface = "bold", colour = "grey10") +
   labs(title = "Location of weather stations",
        subtitle = "Lines show elevation contours at 100m") +
@@ -239,7 +239,7 @@ specs %>%
 \newpage
 
 ```{r, echo=FALSE,out.width="50%", out.height="50%",fig.cap="Weather station photos. Top: Acacia station. Bottom: Ngoitokitok station",fig.show='hold',fig.align='center'}
-knitr::include_graphics(path = here::here(c("assets/acacia_close_small.jpg", "assets/ngoitokitok_close_small.jpg")),
+knitr::include_graphics(path = c("./assets/acacia_close_small.jpg", "./assets/ngoitokitok_close_small.jpg"),
                         auto_pdf = TRUE)
 ```
 
@@ -276,7 +276,7 @@ thinned_data <- input_data %>%
   group_by(rim, date) %>% 
   summarise(min = min(air_temp),
             max = max(air_temp),
-            period = first(period),
+            period = first(observation_period),
             .groups = "drop")
 
 ggplot() +

@@ -1,0 +1,37 @@
+#' @describeIn join_family Fetch basic summary statistics of temperature for given weather station(s) on given date.
+#'
+#' @return A tibble with mean, max, min, and standard deviation of temperature in the focal period.
+#' @export
+#'
+#' @examples
+#' data.frame(from = "2021-10-01", to = "2021-10-31",
+#'            station = "jua") %>%
+#'            dplyr::mutate(multifetch_weather_temp.summary(from = from, to = to, station = station))
+multifetch_weather_temp.summary <- function(from = NULL, to = NULL, at = NULL,
+                                            station = NULL, location = NULL) {
+
+  fetch_weather_temp.mean(from = from, to = to, at = at, station = station, location = location) %>%
+    dplyr::bind_cols(fetch_weather_temp.max(from = from, to = to, at = at, station = station, location = location)) %>%
+    dplyr::bind_cols(fetch_weather_temp.min(from = from, to = to, at = at, station = station, location = location)) %>%
+    dplyr::bind_cols(fetch_weather_temp.sd(from = from, to = to, at = at, station = station, location = location))
+
+}
+
+#' @describeIn join_family Fetch basic summary statistics of rainfall for given weather station(s) on given date.
+#'
+#' @return A tibble with mean, max, min, and standard deviation of rainfall in the focal period.
+#' @export
+#'
+#' @examples
+#' data.frame(from = "2021-10-01", to = "2021-10-31",
+#'            station = "jua") %>%
+#'            dplyr::mutate(multifetch_weather_rain.summary(from = from, to = to, station = station))
+multifetch_weather_rain.summary <- function(from = NULL, to = NULL, at = NULL,
+                                            station = NULL, location = NULL) {
+
+  fetch_weather_rain.mean(from = from, to = to, at = at, station = station, location = location) %>%
+    dplyr::bind_cols(fetch_weather_rain.max(from = from, to = to, at = at, station = station, location = location)) %>%
+    dplyr::bind_cols(fetch_weather_rain.min(from = from, to = to, at = at, station = station, location = location)) %>%
+    dplyr::bind_cols(fetch_weather_rain.sd(from = from, to = to, at = at, station = station, location = location))
+
+}
