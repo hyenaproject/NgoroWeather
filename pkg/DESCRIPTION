@@ -1,0 +1,32 @@
+Package: NgoroWeather
+Type: Package
+Title: Work with weather data from Ngorongoro Hyena Project.
+Version: 0.1.0
+Authors@R: 
+    c(person(given = "Liam",
+             family = "Bailey",
+             role = "aut",
+             email = "liam.bailey@liamdbailey.com"),
+      person(given = "Alexandre",
+             family = "Courtiol",
+             role = c("aut", "cre"),
+             email = "alexandre.courtiol@gmail.com",
+             comment = c(ORCID = "0000-0003-0637-2959")))
+Description: This package is used to work with weather data from the
+    weather station network of the Ngorongoro Hyena Project.
+    This package is mostly designed for advanced users that want to use
+    the weather data for analyses.
+    For a general summary of weather conditions in Ngorongoro Crater
+    please see our reports (URL).
+    For a clean subset of the data summarised by day please see our
+    summary data (URL).
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+Depends: 
+    R (>= 3.4.0)
+Imports:
+    hyenaR,
+    dplyr,
+    tidyr,
+    purrr
