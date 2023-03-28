@@ -56,7 +56,7 @@ showtext_auto()
 
 ```{r load_db, include=FALSE}
 
-load_package_database.full(here("./data/Fisidata_db.sqlite"))
+# load_package_database.full(here("./data/Fisidata_db.sqlite"))
 
 ```
 
@@ -64,8 +64,15 @@ load_package_database.full(here("./data/Fisidata_db.sqlite"))
 
 #Extract all temp/rainfall data for all locations when stations were active
 ## FIXME: Doesn't work because we cross two periods
-input_data <- create_weather_starting.table(variable = c("temp", "rain"),
-                                            to = trunc(Sys.Date(), "months") - 1)
+# input_data <- create_weather_starting.table(input.folder = system.file("extdata/working_weather",
+#                                                                        package = "NgoroWeather"),
+#                                             variable = c("temp", "rain"),
+#                                             to = trunc(Sys.Date(), "months") - 1)
+raw_data <- create_weather_raw.table(input.folder = system.file("extdata/working_weather",
+                                                                  package = "NgoroWeather"))
+
+input_data <- raw_data$data[[1]] |> 
+  mutate(date_time = paste(date, time, sep = " "))
 
 start_date <- min(lubridate::as_date(input_data$date_time))
 end_date   <- max(lubridate::as_date(input_data$date_time))
@@ -106,7 +113,7 @@ ggplot() +
 ```{r max_temp_BAN, echo = FALSE, fig.height=2, fig.width=5, fig.align='center'}
 
 max_temp <- input_data %>% 
-  filter(air_temp == max(air_temp))
+  filter(air_temp == max(air_temp, na.rm = TRUE))
 
 ggplot() +
   geom_richtext(data = max_temp, aes(x = 0.5, y = 0.5, label = glue::glue("<span style='color:#D2042D; font-size:30pt'>**{BAN}°C**</span><br><span style='color:grey25; font-size:10pt'>Highest recorded temperature<br>{site}<br>{date}</span>",
@@ -124,7 +131,7 @@ ggplot() +
 ```{r min_temp_BAN, echo = FALSE, fig.height=2, fig.width=5, fig.align='center'}
 
 min_temp <- input_data %>% 
-  filter(air_temp == min(air_temp))
+  filter(air_temp == min(air_temp, na.rm = TRUE))
 
 ggplot() +
   geom_richtext(data = min_temp, aes(x = 0.5, y = 0.5, label = glue::glue("<span style='color:#0DA2FF; font-size:30pt'>**{BAN}°C**</span><br><span style='color:grey25; font-size:10pt'>Lowest recorded temperature<br>{site}<br>{date}</span>",
@@ -144,10 +151,10 @@ ggplot() +
 daily_sum <- input_data %>% 
   mutate(date = lubridate::as_date(date_time)) %>% 
   group_by(site_name, date) %>% 
-  summarise(total_rain = sum(precip), .groups = "drop")
+  summarise(total_rain = sum(precip, na.rm = TRUE), .groups = "drop")
 
 max_rain <- daily_sum %>% 
-  filter(total_rain == max(total_rain))
+  filter(total_rain == max(total_rain, na.rm = TRUE))
 
 ggplot() +
   geom_richtext(data = max_rain, aes(x = 0.5, y = 0.5, label = glue::glue("<span style='color:#1434A4; font-size:30pt'>**{BAN}mm**</span><br><span style='color:grey25; font-size:10pt'>Highest recorded daily rainfall<br>{site}<br>{date}</span>",
@@ -178,20 +185,20 @@ In the following sections you will find more details on the weather data collect
 
 ```{r static_map, echo=FALSE, warning=FALSE}
 
-crater_rim <- sf_hyenaR$rim_polygon
+crater_rim <- hyenaR::sf_hyenaR$rim_polygon
 
-crater_contours <- sf_hyenaR$crater_contours
+crater_contours <- hyenaR::sf_hyenaR$crater_contours
 
-station_points <- sf_hyenaR$weather_stations %>% 
+station_points <- weather_station_activity %>% 
   bind_cols(sf::st_coordinates(.))
 
-lakes <- sf_hyenaR$waterbodies_lakes
+lakes <- hyneaR::sf_hyenaR$waterbodies_lakes
 
 #Only show roads INSIDE the crater
-roads <- sf_hyenaR$roads_crater %>% 
+roads <- hyneaR::sf_hyenaR$roads_crater %>% 
   sf::st_crop(crater_rim)
 
-rivers <- sf_hyenaR$rivers_all %>% 
+rivers <- hyneaR::sf_hyenaR$rivers_all %>% 
   sf::st_crop(crater_rim)
 
 ggplot() +

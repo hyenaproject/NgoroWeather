@@ -118,118 +118,181 @@ create_weather_summary.table <- function(input.folder, resolution = "day"){
 #'
 #' @examples
 #' #Get temp data from jua station
-#' create_weather_starting.table(variable = "temp", station = "jua")
-create_weather_starting.table <- function(from = NULL, to = NULL, at = NULL,
+#' create_weather_starting.table(system.file("extdata/working_weather", package = "NgoroWeather"),
+#'                               variable = "temp", station = "jua")
+#'
+create_weather_starting.table <- function(input.folder,
+                                          from = NULL, to = NULL, at = NULL,
+                                          resolution = "30 minute",
                                           variable = c("temp", "rain", "rainmax", "humidity", "pressure", "battery"),
                                           station = NULL,
                                           location = NULL){
 
-  #Check station names or location are correct
+  #User must provide one of either station or location, not both
+  if ((!is.null(station) & !is.null(location))) {
+
+    stop("Please provide only one of `station` or `location`.")
+
+  }
+
+  #Check station, location, and variable names
   station   <- check_function_arg.station(station)
   location  <- check_function_arg.location.weather(location)
-
-  #User must provide one of either station or location, not both
-  if ((is.null(station) & is.null(location)) | (!is.null(station) & !is.null(location))) {
-
-    stop("Please provide one of either `station` or `location`.")
-
-  }
-
-  #Check variables are correct
   variable <- check_function_arg.variable.weather(variable)
 
-  #Extract advised dates for station (i.e. when the station was active)
-  #or location (i.e. when a station was at this location)
-  if (!is.null(location)) {
+  ## Create summary table
+  summary_weather <- create_weather_summary.table(input.folder, resolution = resolution)
 
-    #Fill dates are the start/end date at which stations was installed
-    advised_dates <- weather_station_activity |>
-      sf::st_drop_geometry() |>
-      #NOTE: We are assuming that each location only has a single record (i.e. no change of station)
-      dplyr::filter(.data$location %in% !!location) |>
-      dplyr::mutate(end_date = dplyr::case_when(is.infinite(.data$end_date) ~ Sys.Date(),
-                                                .default = .data$end_date) - lubridate::days(1),
-                    start_date = .data$start_date + lubridate::days(1))
-
-    purrr::pmap_df(.l = advised_dates,
-                   .f = function(station_name, location, start_date, end_date){
-
-                     ## check and process arguments:
-                     date_range <- check_function_arg.date.fromtoat(from, to, at,
-                                                                    .fill = TRUE,
-                                                                    #We use the day *after* installation and day *before* removal
-                                                                    #This way we are only returning data from a full day of use
-                                                                    min.date = start_date,
-                                                                    max.date = end_date,
-                                                                    arg.max.length = 1L, data.type = "weather")
-                     from_new       <- date_range$from
-                     to_new         <- date_range$to
-
-                     #If from/to were specified manually and they are before/after advised dates they are ignored and we throw warning
-                     if (from_new < start_date) {
-
-                       warning(paste0("Date requested is before weather station was active.\nStation ", station_name, " was active at ", location, " between: ", start_date, " - ", end_date, ". Data before this period has been ignored."))
-
-                       from_new <- start_date
-
-                     }
-
-                     if (to_new > end_date) {
-
-                       warning(paste0("Date requested is after weather station was active.\nStation ", station_name, " was active at ", location, " between: ", start_date, " - ", end_date, ". Data before this period has been ignored."))
-
-                       to_new <- end_date
-
-                     }
-
-                     extract_database_table("weather") |>
-                       dplyr::filter(.data$station_name %in% !!station_name & recode_x_date(.data$date_time) >= from_new & recode_x_date(.data$date_time) <= to_new) |>
-                       dplyr::select("station_name":"longitude", {{variable}})
-
-                   }) -> output
-
-  } else if (!is.null(station)) {
-
-    #Fill dates are the start/end date at which stations was installed
-    advised_dates <- sf_hyenaR$weather_stations |>
-      sf::st_drop_geometry() |>
-      #NOTE: We are currently only considering the 'official' locations for each station
-      #May need to fix this if we consider e.g. when station was tested at the field house
-      dplyr::filter(.data$station_name %in% !!station) |>
-      dplyr::mutate(end_date = dplyr::case_when(is.infinite(.data$end_date) ~ Sys.Date(),
-                                                .default = .data$end_date) - lubridate::days(1),
-                    start_date = .data$start_date + lubridate::days(1))
-
-    purrr::pmap_df(.l = advised_dates,
-                   .f = function(station_name, location, start_date, end_date){
-
-                     ## check and process arguments:
-                     date_range <- check_function_arg.date.fromtoat(from, to, at,
-                                                                    .fill = TRUE,
-                                                                    #We use the day *after* installation and day *before* removal
-                                                                    #This way we are only returning data from a full day of use
-                                                                    min.date = start_date,
-                                                                    max.date = end_date,
-                                                                    arg.max.length = 1L, data.type = "weather")
-                     from_new       <- date_range$from
-                     to_new         <- date_range$to
-
-                     #If from/to were specified manually and they are before/after advised dates, throw a warning
-                     if (from_new < start_date | to_new > end_date) {
-
-                       warning(paste0("Station ", station_name, " was active in the Crater between ", start_date, " - ", end_date, "\nData outside this period should be treated with caution!"))
-
-                     }
-
-                     extract_database_table("weather") |>
-                       dplyr::filter(.data$station_name %in% !!station_name & recode_x_date(.data$date_time) >= from_new & recode_x_date(.data$date_time) <= to_new) |>
-                       dplyr::select("station_name":"longitude", {{variable}})
-
-
-                   }) -> output
-
+  ## If time is missing, add it back as 00:00. This could be removed if we were creating summary
+  ## data at scale >= day
+  if (!"time" %in% colnames(summary_weather)) {
+    summary_weather$time <- "00:00"
   }
+
+  summary_weather <- summary_weather |>
+    ## Combine to a date time file (we separate them for saving as .csv for output)
+    dplyr::mutate(date_time = lubridate::ymd_hm(paste(.data$date, .data$time, sep = " "),
+                                                tz = "Africa/Dar_es_Salaam"))
+
+  ## Data are already subset to only include the active period of each station (e.g. exclude periods of repair)
+  ## Therefore, if from/to/at not provided just use Inf!
+  date_range <- hyenaR::check_function_arg.date.fromtoat(from, to, at,
+                                                         .fill = TRUE,
+                                                         min.date = min(weather_station_activity$start_date),
+                                                         max.date = max(weather_station_activity$end_date),
+                                                         arg.max.length = 1L, data.type = "weather")
+
+  ## Convert to POSIXct so we can compare to date-time data
+  from       <- as.POSIXct(date_range$from)
+  to         <- as.POSIXct(date_range$to)
+
+  output <- summary_weather |>
+    dplyr::filter(.data$site_name %in% !!location & .data$station_name %in% !!station & .data$date_time >= from & .data$date_time <= to) |>
+    dplyr::select("site_name", "station_name", "date_time", "latitude", "longitude", matches(variable))
 
   output
 
 }
+
+#' @describeIn create_family Create a table of weather data in a given date range
+#'
+#' @return Tibble of weather data
+#' @export
+#'
+#' @examples
+#' #Get temp data from jua station
+#' create_weather_starting.table(variable = "temp", station = "jua")
+# create_weather_starting.table <- function(from = NULL, to = NULL, at = NULL,
+#                                           variable = c("temp", "rain", "rainmax", "humidity", "pressure", "battery"),
+#                                           station = NULL,
+#                                           location = NULL){
+#
+#   #Check station names or location are correct
+#   station   <- check_function_arg.station(station)
+#   location  <- check_function_arg.location.weather(location)
+#
+#   #User must provide one of either station or location, not both
+#   if ((is.null(station) & is.null(location)) | (!is.null(station) & !is.null(location))) {
+#
+#     stop("Please provide one of either `station` or `location`.")
+#
+#   }
+#
+#   #Check variables are correct
+#   variable <- check_function_arg.variable.weather(variable)
+#
+#   #Extract advised dates for station (i.e. when the station was active)
+#   #or location (i.e. when a station was at this location)
+#   if (!is.null(location)) {
+#
+#     #Fill dates are the start/end date at which stations was installed
+#     advised_dates <- weather_station_activity |>
+#       sf::st_drop_geometry() |>
+#       #NOTE: We are assuming that each location only has a single record (i.e. no change of station)
+#       dplyr::filter(.data$location %in% !!location) |>
+#       dplyr::mutate(end_date = dplyr::case_when(is.infinite(.data$end_date) ~ Sys.Date(),
+#                                                 .default = .data$end_date) - lubridate::days(1),
+#                     start_date = .data$start_date + lubridate::days(1))
+#
+#     purrr::pmap_df(.l = advised_dates,
+#                    .f = function(station_name, location, start_date, end_date){
+#
+#                      ## check and process arguments:
+#                      date_range <- check_function_arg.date.fromtoat(from, to, at,
+#                                                                     .fill = TRUE,
+#                                                                     #We use the day *after* installation and day *before* removal
+#                                                                     #This way we are only returning data from a full day of use
+#                                                                     min.date = start_date,
+#                                                                     max.date = end_date,
+#                                                                     arg.max.length = 1L, data.type = "weather")
+#                      from_new       <- date_range$from
+#                      to_new         <- date_range$to
+#
+#                      #If from/to were specified manually and they are before/after advised dates they are ignored and we throw warning
+#                      if (from_new < start_date) {
+#
+#                        warning(paste0("Date requested is before weather station was active.\nStation ", station_name, " was active at ", location, " between: ", start_date, " - ", end_date, ". Data before this period has been ignored."))
+#
+#                        from_new <- start_date
+#
+#                      }
+#
+#                      if (to_new > end_date) {
+#
+#                        warning(paste0("Date requested is after weather station was active.\nStation ", station_name, " was active at ", location, " between: ", start_date, " - ", end_date, ". Data before this period has been ignored."))
+#
+#                        to_new <- end_date
+#
+#                      }
+#
+#                      extract_database_table("weather") |>
+#                        dplyr::filter(.data$station_name %in% !!station_name & recode_x_date(.data$date_time) >= from_new & recode_x_date(.data$date_time) <= to_new) |>
+#                        dplyr::select("station_name":"longitude", {{variable}})
+#
+#                    }) -> output
+#
+#   } else if (!is.null(station)) {
+#
+#     #Fill dates are the start/end date at which stations was installed
+#     advised_dates <- sf_hyenaR$weather_stations |>
+#       sf::st_drop_geometry() |>
+#       #NOTE: We are currently only considering the 'official' locations for each station
+#       #May need to fix this if we consider e.g. when station was tested at the field house
+#       dplyr::filter(.data$station_name %in% !!station) |>
+#       dplyr::mutate(end_date = dplyr::case_when(is.infinite(.data$end_date) ~ Sys.Date(),
+#                                                 .default = .data$end_date) - lubridate::days(1),
+#                     start_date = .data$start_date + lubridate::days(1))
+#
+#     purrr::pmap_df(.l = advised_dates,
+#                    .f = function(station_name, location, start_date, end_date){
+#
+#                      ## check and process arguments:
+#                      date_range <- check_function_arg.date.fromtoat(from, to, at,
+#                                                                     .fill = TRUE,
+#                                                                     #We use the day *after* installation and day *before* removal
+#                                                                     #This way we are only returning data from a full day of use
+#                                                                     min.date = start_date,
+#                                                                     max.date = end_date,
+#                                                                     arg.max.length = 1L, data.type = "weather")
+#                      from_new       <- date_range$from
+#                      to_new         <- date_range$to
+#
+#                      #If from/to were specified manually and they are before/after advised dates, throw a warning
+#                      if (from_new < start_date | to_new > end_date) {
+#
+#                        warning(paste0("Station ", station_name, " was active in the Crater between ", start_date, " - ", end_date, "\nData outside this period should be treated with caution!"))
+#
+#                      }
+#
+#                      extract_database_table("weather") |>
+#                        dplyr::filter(.data$station_name %in% !!station_name & recode_x_date(.data$date_time) >= from_new & recode_x_date(.data$date_time) <= to_new) |>
+#                        dplyr::select("station_name":"longitude", {{variable}})
+#
+#
+#                    }) -> output
+#
+#   }
+#
+#   output
+#
+# }
