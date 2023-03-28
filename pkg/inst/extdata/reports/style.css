@@ -1,0 +1,32 @@
+/* Whole document: */
+body{
+  font-family: "Montserrat", sans-serif;
+  font-size: 10pt;
+  font-weight: 400;
+}
+/* Headers */
+h1{
+  font-family: "Montserrat", sans-serif;
+  font-size: 16pt;
+  font-weight: 600;
+}
+
+h2{
+  font-family: "Montserrat", sans-serif;
+  font-size: 14pt;
+  font-weight: 400;
+}
+
+h3{
+  font-family: "Montserrat", sans-serif;
+  font-size: 12pt;
+  font-weight: 400;
+}
+
+hr {
+  display: block;
+  height: 1px;
+  border: 0;
+  border-top: 3px solid #1a1a1a; 
+  margin: 1em 0;
+  padding: 0;}

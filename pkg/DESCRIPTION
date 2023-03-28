@@ -29,4 +29,8 @@ Imports:
     hyenaR,
     dplyr,
     tidyr,
-    purrr
+    purrr,
+    withr,
+    gt,
+    showtext,
+    kableExtra

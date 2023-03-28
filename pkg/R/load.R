@@ -68,8 +68,8 @@ load_data_weatherstation.file <- function(excel.path, tz = "Africa/Dar_es_Salaam
   #Extract meta-data info
   excel_data$Metadata |>
     stats::setNames(nm = c("metadata_category", "info", "value")) |>
-    tidyr::drop_na(.data$info) |>
-    tidyr::fill(.data$metadata_category, .direction = "down") |>
+    tidyr::drop_na("info") |>
+    tidyr::fill("metadata_category", .direction = "down") |>
     #Convert everything to lower snake case
     dplyr::mutate(dplyr::across(.cols = dplyr::everything(), .fns = hyenaR::recode_chr_snake.case)) |>
     dplyr::group_by(.data$metadata_category) -> meta_data
@@ -100,7 +100,7 @@ load_data_weatherstation.file <- function(excel.path, tz = "Africa/Dar_es_Salaam
                   precip = "mm.Precipitation",
                   precip_max_hourly = "mm.h.Max.Precip.Rate",
                   battery_percent = "X..Battery.Percent") |>
-    dplyr::mutate(across(.data$latitude:.data$battery_percent, .fns = as.numeric)) -> output
+    dplyr::mutate(across("latitude":"battery_percent", .fns = as.numeric)) -> output
 
   #Run checks on important meta-data attributes
   meta_data <- check_weatherstation_metadata.file(metadata = meta_data, verbose = verbose)

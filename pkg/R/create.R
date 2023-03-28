@@ -64,30 +64,6 @@ create_weather_raw.table <- function(input.folder){
 
 }
 
-create_weather_summary.table <- function(input.tbl){
-
-  output.tbl <- input.tbl |>
-    dplyr::group_by(station_name, site_name, date) |>
-    dplyr::summarise(latitude = first(latitude),
-                     longitude = first(longitude),
-                     period = first(observation_period),
-                     air_temp_mean = mean(air_temp),
-                     air_temp_max = max(air_temp),
-                     air_temp_min = min(air_temp),
-                     precip_mean = mean(precip),
-                     precip_max = max(precip),
-                     precip_total = sum(precip),
-                     precip_max_hourly_mean = mean(precip_max_hourly),
-                     precip_max_hourly_max = max(precip_max_hourly),
-                     relative_humidity_mean = mean(relative_humidity),
-                     relative_humidity_max = max(relative_humidity),
-                     relative_humidity_min = min(relative_humidity),
-                     atmospheric_pressure_mean = mean(atmospheric_pressure),
-                     atmospheric_pressure_max = max(atmospheric_pressure),
-                     atmospheric_pressure_min = min(atmospheric_pressure))
-
-}
-
 create_weather_summary.table <- function(input.folder, resolution = "day"){
 
   raw_data <- create_weather_raw.table(input.folder)
