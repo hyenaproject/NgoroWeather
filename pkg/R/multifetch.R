@@ -1,5 +1,7 @@
 #' Fetch basic summary statistics of temperature for given weather station(s) on given date.
 #'
+#' @inheritParams arguments
+#'
 #' @return A tibble with mean, max, min, and standard deviation of temperature in the focal period.
 #' @export
 #'
@@ -18,6 +20,8 @@ multifetch_weather_temp.summary <- function(from = NULL, to = NULL, at = NULL,
 }
 
 #' Fetch basic summary statistics of rainfall for given weather station(s) on given date.
+#'
+#' @inheritParams arguments
 #'
 #' @return A tibble with mean, max, min, and standard deviation of rainfall in the focal period.
 #' @export

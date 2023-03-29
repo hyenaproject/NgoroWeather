@@ -6,6 +6,9 @@
 \usage{
 check_function_arg.station(station)
 }
+\arguments{
+\item{station}{A character vector. Vector of weather station names.}
+}
 \value{
 A character vector of weather station names
 }

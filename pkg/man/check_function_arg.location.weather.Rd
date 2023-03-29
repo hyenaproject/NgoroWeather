@@ -6,6 +6,9 @@
 \usage{
 check_function_arg.location.weather(location)
 }
+\arguments{
+\item{location}{Character vector. Location of weather station where data should be used. Can be 'ngoitokitok' or 'acacia'.}
+}
 \value{
 A character vector of weather station locations
 }

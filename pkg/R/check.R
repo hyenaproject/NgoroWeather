@@ -1,5 +1,7 @@
 #' Check weather station names are valid.
 #'
+#' @inheritParams arguments
+#'
 #' @return A character vector of weather station names
 #' @export
 #'
@@ -31,6 +33,8 @@ check_function_arg.station <- function(station){
 
 
 #' Check weather station locations are valid.
+#'
+#' @inheritParams arguments
 #'
 #' @return A character vector of weather station locations
 #' @export
