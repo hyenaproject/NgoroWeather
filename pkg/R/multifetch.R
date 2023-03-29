@@ -6,6 +6,9 @@
 #' @export
 #'
 #' @examples
+#' load_package_database.weather(system.file("extdata/working_weather",
+#' package = "NgoroWeather"), overwrite.db = "yes")
+#'
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
 #'            dplyr::mutate(multifetch_weather_temp.summary(from = from, to = to, station = station))
@@ -27,6 +30,9 @@ multifetch_weather_temp.summary <- function(from = NULL, to = NULL, at = NULL,
 #' @export
 #'
 #' @examples
+#' load_package_database.weather(system.file("extdata/working_weather",
+#' package = "NgoroWeather"), overwrite.db = "yes")
+#'
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
 #'            dplyr::mutate(multifetch_weather_rain.summary(from = from, to = to, station = station))

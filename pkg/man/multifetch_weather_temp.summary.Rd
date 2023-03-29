@@ -30,6 +30,9 @@ A tibble with mean, max, min, and standard deviation of temperature in the focal
 Fetch basic summary statistics of temperature for given weather station(s) on given date.
 }
 \examples{
+load_package_database.weather(system.file("extdata/working_weather",
+package = "NgoroWeather"), overwrite.db = "yes")
+
 data.frame(from = "2021-10-01", to = "2021-10-31",
            station = "jua") |>
            dplyr::mutate(multifetch_weather_temp.summary(from = from, to = to, station = station))
