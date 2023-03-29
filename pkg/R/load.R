@@ -1,3 +1,12 @@
+#' Load weather data.
+#'
+#' If no hyenaR database is present, will create a standalone .database object
+#' for weather. This will function in a similar way to hyenaR processes.
+#'
+#' If a hyenaR database is present, will append weather data to the database allowing
+#' weather and hyena information to be used simultaneously.
+#'
+#' @inheritParams arguments
 load_package_database.weather <- function(input.folder,
                                           overwrite.db = c("prompt", "yes", "no"),
                                           verbose = TRUE){
@@ -17,7 +26,7 @@ load_package_database.weather <- function(input.folder,
         # Allow the user to choose whether they:
         # a) overwrite the existing data
         # b) exit (i.e. use the existing data)
-        overwrite.db <- menu(
+        overwrite.db <- utils::menu(
           choices = c("Overwrite existing data", "Exit"),
           title = "Some weather data has already been loaded. What do you want to do?"
         )
@@ -70,7 +79,7 @@ load_package_database.weather <- function(input.folder,
           # Allow the user to choose whether they:
           # a) overwrite the existing data
           # b) exit (i.e. use the existing data)
-          overwrite.db <- menu(
+          overwrite.db <- utils::menu(
             choices = c("Overwrite existing data", "Exit"),
             title = "Weather data already loaded. What do you want to do?"
           )
@@ -244,7 +253,7 @@ load_data_weatherstation.file <- function(excel.path, tz = "Africa/Dar_es_Salaam
                   precip = "mm.Precipitation",
                   precip_max_hourly = "mm.h.Max.Precip.Rate",
                   battery_percent = "X..Battery.Percent") |>
-    dplyr::mutate(across("latitude":"battery_percent", .fns = as.numeric)) -> output
+    dplyr::mutate(dplyr::across("latitude":"battery_percent", .fns = as.numeric)) -> output
 
   #Run checks on important meta-data attributes
   meta_data <- check_weatherstation_metadata.file(metadata = meta_data, verbose = verbose)

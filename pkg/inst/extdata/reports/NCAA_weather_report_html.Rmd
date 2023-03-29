@@ -86,7 +86,7 @@ load_package_database.full(here("./data/Fisidata_db.sqlite"))
 
 #For now, just use all data.
 input_data <- create_weather_starting.table(variable = c("temp", "rain"), location = c("ngoitokitok", "acacia"),
-                                            from = "2021-10-01", to = "2022-01-31") %>% 
+                                            from = "2021-10-01", to = "2022-01-31") |> 
   #FIXME: Need to update the data to have site name ngoitokitok
   mutate(site_name = case_when(site_name == "mlima" ~ "Ngoitokitok",
                                TRUE ~ stringr::str_to_title(site_name)))
@@ -94,9 +94,9 @@ input_data <- create_weather_starting.table(variable = c("temp", "rain"), locati
 start_date <- min(lubridate::as_date(input_data$date_time))
 end_date   <- max(lubridate::as_date(input_data$date_time))
 
-days_per_station <- input_data %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(site_name) %>% 
+days_per_station <- input_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(site_name) |> 
   summarise(n = length(unique(date)), .groups = "drop")
 
 total_days <- sum(days_per_station$n)
@@ -130,7 +130,7 @@ ggplot() +
 
 ```{r max_temp_BAN, echo = FALSE, fig.height=1.25, fig.width=5, fig.align='center'}
 
-max_temp <- input_data %>% 
+max_temp <- input_data |> 
   filter(air_temp == max(air_temp))
 
 ggplot() +
@@ -146,7 +146,7 @@ ggplot() +
 
 ```{r min_temp_BAN, echo = FALSE, fig.height=1.25, fig.width=5, fig.align='center'}
 
-min_temp <- input_data %>% 
+min_temp <- input_data |> 
   filter(air_temp == min(air_temp))
 
 ggplot() +
@@ -162,12 +162,12 @@ ggplot() +
 
 ```{r max_rain_BAN, echo = FALSE, fig.height=1.25, fig.width=5, fig.align='center'}
 
-daily_sum <- input_data %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(site_name, date) %>% 
+daily_sum <- input_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(site_name, date) |> 
   summarise(total_rain = sum(precip), .groups = "drop")
 
-max_rain <- daily_sum %>% 
+max_rain <- daily_sum |> 
   filter(total_rain == max(total_rain))
 
 ggplot() +
@@ -214,16 +214,16 @@ crater_rim <- sf_hyenaR$rim_polygon
 
 crater_contours <- sf_hyenaR$crater_contours
 
-station_points <- sf_hyenaR$weather_stations %>% 
+station_points <- sf_hyenaR$weather_stations |> 
   bind_cols(sf::st_coordinates(.))
 
 lakes <- sf_hyenaR$waterbodies_lakes
 
 #Only show roads INSIDE the crater
-roads <- sf_hyenaR$roads_crater %>% 
+roads <- sf_hyenaR$roads_crater |> 
   sf::st_crop(crater_rim)
 
-rivers <- sf_hyenaR$rivers_all %>% 
+rivers <- sf_hyenaR$rivers_all |> 
   sf::st_crop(crater_rim)
 
 map <- ggplot() +
@@ -255,7 +255,7 @@ map
 ## ACACIA SITE
 
 #Load data
-station <- sf_hyenaR$weather_stations %>% 
+station <- sf_hyenaR$weather_stations |> 
   filter(location == "acacia")
 
 #Corresponding station image
@@ -264,17 +264,17 @@ station_image <- here("assets/acacia_close.jpg")
 ## JUA DATA
 
 #Load data
-station_jua <- sf_hyenaR$weather_stations %>% 
+station_jua <- sf_hyenaR$weather_stations |> 
   filter(location == "ngoitokitok")
 
 #Corresponding station image
 station_image_jua <- here::here("assets/ngoitokitok_close.jpg")
 
-leaflet() %>% 
-  addProviderTiles(providers$Esri.WorldImagery, group="Satellite") %>%
-  addProviderTiles(providers$OpenTopoMap, group="Topographic map") %>%
-  addLayersControl(baseGroups=c('Satellite', 'Topographic map')) %>%  
-  setView(lat = -3.1769, lng = 35.5569, zoom = 12) %>% 
+leaflet() |> 
+  addProviderTiles(providers$Esri.WorldImagery, group="Satellite") |>
+  addProviderTiles(providers$OpenTopoMap, group="Topographic map") |>
+  addLayersControl(baseGroups=c('Satellite', 'Topographic map')) |>  
+  setView(lat = -3.1769, lng = 35.5569, zoom = 12) |> 
   # addAwesomeMarkers(data = photo_sites, label = ~name,
   #                   icon = awesomeIcons(
   #                     icon = 'camera',
@@ -284,13 +284,13 @@ leaflet() %>%
   #                                               src = "local",
   #                                               embed = TRUE,
   #                                               height = 400,
-  #                                               width = 400)) %>% 
+  #                                               width = 400)) |> 
   addMarkers(data = station, label = "Acacia weather station",
              popup = leafpop::popupImage(station_image,
                                          src = "local",
                                          embed = TRUE,
                                          height = 400,
-                                         width = 400)) %>% 
+                                         width = 400)) |> 
   addMarkers(data = station_jua, label = "Ngoitokitok weather station",
              popup = leafpop::popupImage(station_image_jua,
                                          src = "local",
@@ -322,38 +322,38 @@ specs <- data.frame(variable = c("Company", "Model", "Data collection frequency"
                     rain = c("Meter Group", "ECRN-100", "30min", "0.2mm", "Tipping bucket rain gauge"))
 
 
-specs %>%
-  gt() %>% 
+specs |>
+  gt() |> 
   cols_width(variable ~ px(120),
-             everything() ~ px(80)) %>% 
+             everything() ~ px(80)) |> 
   cols_label(variable = "",
              logger = "Data Logger",
              temp = "Temperature Sensor",
-             rain = "Rain Gauge") %>% 
-  cols_align(align = "center", columns = -variable) %>% 
+             rain = "Rain Gauge") |> 
+  cols_align(align = "center", columns = -variable) |> 
   tab_header(title = md("Weather station technical specifications"),
-             subtitle = md("Specifications of equipment used in all stations")) %>% 
-  tab_source_note(source_note = "Data: Meter Group") %>% 
+             subtitle = md("Specifications of equipment used in all stations")) |> 
+  tab_source_note(source_note = "Data: Meter Group") |> 
   tab_style(
     locations = cells_column_labels(columns = everything()),
     style     = list(
       cell_borders(sides = "bottom", weight = px(3)),
       cell_text(weight = "bold")
     )
-  ) %>% 
+  ) |> 
   tab_style(
     locations = cells_title(groups = "title"),
     style     = list(
       cell_text(weight = "bold", size = 24)
     )
-  ) %>% 
-  opt_all_caps() %>% 
+  ) |> 
+  opt_all_caps() |> 
   opt_table_font(
     font = list(
       google_font("Montserrat"),
       default_fonts()
     )
-  ) %>%
+  ) |>
   tab_options(
     column_labels.border.top.width = px(3),
     column_labels.border.top.color = "#FFFFFF00",
@@ -391,16 +391,16 @@ The below plot covers the period `r format(start_date, "%d/%m/%Y")` - `r format(
 ```{r temp_graph, echo = FALSE}
 
 #Determine mean of each day from across both stations
-daily_mean <- input_data %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(date) %>% 
-  summarise(daily_mean = mean(air_temp)) %>% 
+daily_mean <- input_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
+  summarise(daily_mean = mean(air_temp)) |> 
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
 
 #Take daily max and min from each station (30min is too frequent)
-thinned_data <- input_data %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(site_name, date) %>% 
+thinned_data <- input_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(site_name, date) |> 
   summarise(min = min(air_temp),
             max = max(air_temp), .groups = "drop")
 
@@ -466,55 +466,55 @@ ggsave(all_temp_square, filename = "/home/bailey/weather_data_reports/figs/all_t
 
 ```{r temp_heatmap, echo = FALSE}
 
-summary_data <- input_data %>%
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(site_name, date) %>% 
-  summarise(daily_mean = mean(air_temp), .groups = "drop") %>% 
+summary_data <- input_data |>
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(site_name, date) |> 
+  summarise(daily_mean = mean(air_temp), .groups = "drop") |> 
   mutate(month_dbl = lubridate::year(date)*12 + lubridate::month(date),
-         month = format(date, "%b %Y")) %>% 
-  group_by(site_name, month) %>% 
+         month = format(date, "%b %Y")) |> 
+  group_by(site_name, month) |> 
   summarise(monthly_mean = mean(daily_mean),
-            month_dbl = first(month_dbl), .groups = "drop") %>%
+            month_dbl = first(month_dbl), .groups = "drop") |>
   mutate(site_name = stringr::str_to_title(site_name),
          monthly_mean = round(monthly_mean, 2),
-         month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) %>% 
-  select(-month_dbl) %>%
+         month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) |> 
+  select(-month_dbl) |>
   pivot_wider(names_from = site_name, values_from = monthly_mean)
 
 emissions_palette <- scales::col_numeric(c("#FFD700", "#FF5733", "#900C3F"), domain = c(18, 22))
 
-summary_data %>%
-  arrange(month) %>% 
-  gt() %>% 
+summary_data |>
+  arrange(month) |> 
+  gt() |> 
   cols_width(month ~ px(80),
-             everything() ~ px(120)) %>% 
-  cols_label(month = "") %>% 
-  cols_align(align = "center", columns = -month) %>% 
+             everything() ~ px(120)) |> 
+  cols_label(month = "") |> 
+  cols_align(align = "center", columns = -month) |> 
   tab_header(title = "",
-             subtitle = "") %>% 
-  tab_source_note(source_note = "Data: Ngorongoro Hyena Project weather station network. Collected at 30 minute intervals") %>% 
+             subtitle = "") |> 
+  tab_source_note(source_note = "Data: Ngorongoro Hyena Project weather station network. Collected at 30 minute intervals") |> 
   tab_style(
     locations = cells_column_labels(columns = everything()),
     style     = list(
       cell_borders(sides = "bottom", weight = px(3)),
       cell_text(weight = "bold")
     )
-  ) %>% 
+  ) |> 
   tab_style(
     locations = cells_title(groups = "title"),
     style     = list(
       cell_text(weight = "bold", size = 24)
     )
-  ) %>% 
+  ) |> 
   data_color(columns = -month,
-             colors = emissions_palette) %>% 
-  opt_all_caps() %>% 
+             colors = emissions_palette) |> 
+  opt_all_caps() |> 
   opt_table_font(
     font = list(
       google_font("Montserrat"),
       default_fonts()
     )
-  ) %>%
+  ) |>
   tab_options(
     column_labels.border.top.width = px(3),
     column_labels.border.top.color = "#FFFFFF00",
@@ -541,23 +541,23 @@ The below plot shows daily variation in temperature using data collected from `r
 ```{r daily_temp_graph, echo = FALSE}
 
 #Determine mean of each 30min from across both stations
-time_mean <- input_data %>% 
+time_mean <- input_data |> 
   mutate(time_cat = format(date_time, "%H:%M"),
-         time_dbl = lubridate::hour(date_time)*60 + lubridate::minute(date_time)) %>% 
-  group_by(time_cat) %>% 
+         time_dbl = lubridate::hour(date_time)*60 + lubridate::minute(date_time)) |> 
+  group_by(time_cat) |> 
   summarise(time_mean = mean(air_temp),
             time_dbl = first(time_dbl), .groups = "drop")
 
 #Take daily max and min from each station (30min is too frequent)
-daily_data <- input_data %>% 
+daily_data <- input_data |> 
   mutate(date_grp = paste(format(date_time, "%d/%m/%Y"), station_name),
          time_dbl = lubridate::hour(date_time)*60 + lubridate::minute(date_time))
 
 #Alternative using ribbon
-daily_range <- input_data %>% 
+daily_range <- input_data |> 
   mutate(time_cat = format(date_time, "%H:%M"),
-         time_dbl = lubridate::hour(date_time)*60 + lubridate::minute(date_time)) %>% 
-  group_by(time_cat, site_name) %>% 
+         time_dbl = lubridate::hour(date_time)*60 + lubridate::minute(date_time)) |> 
+  group_by(time_cat, site_name) |> 
   summarise(time_min = min(air_temp),
             time_max = max(air_temp),
             time_dbl = first(time_dbl), .groups = "drop")
@@ -608,18 +608,18 @@ The below plot shows the mean daily rainfall in each month. Rainfall from Acacia
 
 ```{r rain_graph_mm, echo = FALSE}
 
-summary_data <- input_data %>%
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(site_name, date) %>% 
-  summarise(daily_total = sum(precip), .groups = "drop") %>% 
+summary_data <- input_data |>
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(site_name, date) |> 
+  summarise(daily_total = sum(precip), .groups = "drop") |> 
   mutate(month_dbl = lubridate::year(date)*12 + lubridate::month(date),
-         month = as.factor(format(date, "%b %Y"))) %>% 
-  group_by(site_name, month) %>% 
+         month = as.factor(format(date, "%b %Y"))) |> 
+  group_by(site_name, month) |> 
   summarise(mean_rain = mean(daily_total),
             se = sd(daily_total)/sqrt(n()),
-            month_dbl = first(month_dbl), .groups = "drop") %>%
+            month_dbl = first(month_dbl), .groups = "drop") |>
   mutate(mean_rain = round(mean_rain, 2),
-         month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) %>% 
+         month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) |> 
   select(-month_dbl)
 
 rainfall_plot1 <- ggplot() +
@@ -657,54 +657,54 @@ rainfall_plot1
 
 ```{r rain_heatmap, echo = FALSE}
 
-summary_data <- input_data %>%
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(site_name, date) %>% 
-  summarise(daily_total = sum(precip), .groups = "drop") %>% 
+summary_data <- input_data |>
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(site_name, date) |> 
+  summarise(daily_total = sum(precip), .groups = "drop") |> 
   mutate(month_dbl = lubridate::year(date)*12 + lubridate::month(date),
-         month = as.factor(format(date, "%b %Y"))) %>% 
-  group_by(site_name, month) %>% 
+         month = as.factor(format(date, "%b %Y"))) |> 
+  group_by(site_name, month) |> 
   summarise(mean_rain = mean(daily_total),
-            month_dbl = first(month_dbl), .groups = "drop") %>%
+            month_dbl = first(month_dbl), .groups = "drop") |>
   mutate(mean_rain = round(mean_rain, 2),
-         month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) %>% 
-  select(-month_dbl) %>% 
+         month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) |> 
+  select(-month_dbl) |> 
   pivot_wider(names_from = site_name, values_from = mean_rain)
 
 emissions_palette <- scales::col_numeric(c("#FFFFFF", "#DFF6FF", "#5D8BF4", "#2D31FA", "#051367"), domain = c(0, 10))
 
-summary_data %>%
-  arrange(month) %>% 
-  gt() %>% 
+summary_data |>
+  arrange(month) |> 
+  gt() |> 
   cols_width(month ~ px(80),
-             everything() ~ px(120)) %>% 
-  cols_label(month = "") %>% 
-  cols_align(align = "center", columns = -month) %>% 
+             everything() ~ px(120)) |> 
+  cols_label(month = "") |> 
+  cols_align(align = "center", columns = -month) |> 
   tab_header(title = "",
-             subtitle = "") %>% 
-  tab_source_note(source_note = "Data: Ngorongoro Hyena Project weather station network. Collected at 30 minute intervals") %>% 
+             subtitle = "") |> 
+  tab_source_note(source_note = "Data: Ngorongoro Hyena Project weather station network. Collected at 30 minute intervals") |> 
   tab_style(
     locations = cells_column_labels(columns = everything()),
     style     = list(
       cell_borders(sides = "bottom", weight = px(3)),
       cell_text(weight = "bold")
     )
-  ) %>% 
+  ) |> 
   tab_style(
     locations = cells_title(groups = "title"),
     style     = list(
       cell_text(weight = "bold", size = 24)
     )
-  ) %>% 
+  ) |> 
   data_color(columns = -month,
-             colors = emissions_palette) %>% 
-  opt_all_caps() %>% 
+             colors = emissions_palette) |> 
+  opt_all_caps() |> 
   opt_table_font(
     font = list(
       google_font("Montserrat"),
       default_fonts()
     )
-  ) %>%
+  ) |>
   tab_options(
     column_labels.border.top.width = px(3),
     column_labels.border.top.color = "#FFFFFF00",
@@ -730,18 +730,18 @@ The below plot shows the number of rain days recorded each month (days with rain
 
 ```{r rain_graph_days, echo = FALSE}
 
-summary_data <- input_data %>%
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(site_name, date) %>% 
-  summarise(daily_total = sum(precip), .groups = "drop") %>% 
+summary_data <- input_data |>
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(site_name, date) |> 
+  summarise(daily_total = sum(precip), .groups = "drop") |> 
   mutate(month_dbl = lubridate::year(date)*12 + lubridate::month(date),
-         month = as.factor(format(date, "%b %Y"))) %>% 
-  group_by(site_name, month) %>% 
+         month = as.factor(format(date, "%b %Y"))) |> 
+  group_by(site_name, month) |> 
   summarise(rain_days = sum(daily_total > 1),
-            month_dbl = first(month_dbl), .groups = "drop") %>%
+            month_dbl = first(month_dbl), .groups = "drop") |>
   mutate(site_name = stringr::str_to_title(site_name),
          rain_days = round(rain_days, 2),
-         month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) %>% 
+         month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) |> 
   select(-month_dbl)
 
 rainfall_plot2 <- ggplot() +
@@ -798,26 +798,26 @@ Below we provide more detailed temperature and rainfall plots for each station. 
 ```{r temp_graph1, echo = FALSE}
 
 #Site data
-site_data <- input_data %>% 
+site_data <- input_data |> 
   filter(site_name == all_names[1])
 
 #Determine mean of each day from across both stations
-daily_mean <- site_data %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(date) %>% 
+daily_mean <- site_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
   summarise(daily_mean = mean(air_temp))
 
-max_temp <- site_data  %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
+max_temp <- site_data  |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
   filter(air_temp == max(air_temp))
 
-min_temp <- site_data  %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
+min_temp <- site_data  |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
   filter(air_temp == min(air_temp))
 
-temp_range <- site_data %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(date) %>% 
+temp_range <- site_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
   summarise(min_temp = min(air_temp),
             max_temp = max(air_temp))
 
@@ -856,13 +856,13 @@ plot_temp_1 <- ggplot() +
 ```{r rain_graph1, echo = FALSE}
 
 #Determine mean of each day from across both stations
-daily_sum <- site_data %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(date) %>% 
-  summarise(total_rain = sum(precip)) %>% 
+daily_sum <- site_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
+  summarise(total_rain = sum(precip)) |> 
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
 
-max_rain <- daily_sum %>% 
+max_rain <- daily_sum |> 
   filter(total_rain == max(total_rain))
 
 plot_rain_1 <- ggplot() +
@@ -907,26 +907,26 @@ patch_plot_1
 ```{r temp_graph2, echo = FALSE}
 
 #Site data
-site_data <- input_data %>% 
+site_data <- input_data |> 
   filter(site_name == all_names[2])
 
 #Determine mean of each day from across both stations
-daily_mean <- site_data %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(date) %>% 
+daily_mean <- site_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
   summarise(daily_mean = mean(air_temp))
 
-max_temp <- site_data  %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
+max_temp <- site_data  |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
   filter(air_temp == max(air_temp))
 
-min_temp <- site_data  %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
+min_temp <- site_data  |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
   filter(air_temp == min(air_temp))
 
-temp_range <- site_data %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(date) %>% 
+temp_range <- site_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
   summarise(min_temp = min(air_temp),
             max_temp = max(air_temp))
 
@@ -966,13 +966,13 @@ plot_temp_2 <- ggplot() +
 ```{r rain_graph2, echo = FALSE}
 
 #Determine mean of each day from across both stations
-daily_sum <- site_data %>% 
-  mutate(date = lubridate::as_date(date_time)) %>% 
-  group_by(date) %>% 
-  summarise(total_rain = sum(precip)) %>% 
+daily_sum <- site_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
+  summarise(total_rain = sum(precip)) |> 
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
 
-max_rain <- daily_sum %>% 
+max_rain <- daily_sum |> 
   filter(total_rain == max(total_rain))
 
 plot_rain_2 <- ggplot() +

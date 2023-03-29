@@ -15,6 +15,9 @@
 #' @param metadata Data frame. Metadata of a file to be checked.
 #' @param tz Time zone used of date-time object. See ?timezones for more details on time zones in R.
 #' @param verbose Logical. Should the function generate messages (default: TRUE)
+#' @param variable Character vector. Weather variables to return. By default include air temperature ('air_temp'),
+#' and precipitation ('precip'). Can also include maximum precipitation rate ('precip_max_hourly'),
+#' 'relative_humidity', 'atmospheric_pressure', 'battery_percent'.
 #'
 #' @param .cache Logical for internal use (do not change). It indicates if the function should create and use cached data. When TRUE (default) function will use cached data if it exists and create cached data if one does not#exist. When FALSE function will always build table from scratch, even if cached data already exists. The cached output differs from the non cached one since it contains 2 alternative implementation for the ending date corresponding to the possible settings for the argument `censored.to.last.sighting`.
 #' @param .clean.old.csv A logical indicating whether existing `*.csv` files should be deleted from the `csv.output.folder` before new database files are downloaded. If TRUE, *all* existing `*.csv` files in `csv.output.folder` will be deleted, not just old versions of the database files. New database files will then be downloaded. If FALSE, no existing `*.csv` files in `csv.output.folder` will be deleted. New database files will then be downloaded and will *overwrite* old versions of the database files. This argument can be safely ignored if you are using R inside RStudio (interactive), you will be shown a menu where you can decide how to deal with existing '*.csv' files instead.

@@ -1,4 +1,4 @@
-#' @describeIn fetch_family Generate summary statistics column(s) for weather variable(s).
+#' Generate summary statistics column(s) for weather variable(s).
 #'
 #' NOTE: This function is best suited for applying custom functions, or apply a single function to multiple.
 #' weather variables. For common statistics (mean, min, max, sd)
@@ -11,13 +11,13 @@
 #' @examples
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
-#'            station = "jua") %>%
+#'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_fn(from = from, to = to, station = station,
 #'                          variable = c("temp", "rain"), fn = mean, suffix = "mean"))
 #'
 #' #Apply a custom function to find difference between temperature min/max
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
-#'            station = "jua") %>%
+#'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_fn(from = from, to = to, station = station,
 #'                          variable = "temp", fn = ~{max(.) - min(.)}, suffix = "diff"))
 fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
@@ -46,28 +46,27 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
 
   }
 
-  input %>%
-    dplyr::mutate(purrr::pmap_df(.l = .,
-                                 .f = ~{
+  dplyr::mutate(purrr::pmap_df(.l = input,
+                               .f = ~{
 
-                                   create_crater_weather.table(from = ..1, to = ..2, variable = variable,
-                                                                 station = station, location = location) %>%
-                                     dplyr::group_by(.data$site_name) %>%
-                                     dplyr::summarise(dplyr::across(.cols = dplyr::matches(variable_regex, perl = TRUE),
-                                                             .fns = fn,
-                                                             .names = paste0("{.col}_", suffix))) %>%
-                                     tidyr::pivot_wider(names_from = site_name,
-                                                        values_from = -"site_name", names_glue = "{site_name}_{.value}")
+                                 create_crater_weather.table(from = ..1, to = ..2, variable = variable,
+                                                             station = station, location = location) |>
+                                   dplyr::group_by(.data$site_name) |>
+                                   dplyr::summarise(dplyr::across(.cols = dplyr::matches(variable_regex, perl = TRUE),
+                                                                  .fns = fn,
+                                                                  .names = paste0("{.col}_", suffix))) |>
+                                   tidyr::pivot_wider(names_from = site_name,
+                                                      values_from = -"site_name", names_glue = "{site_name}_{.value}")
 
-                                 })) -> output
+                               })) -> output
 
-  hyenaR::check_function_output(input.tbl = input_full, output.tbl = output, join.by = c("from", "to")) %>%
+  hyenaR::check_function_output(input.tbl = input_full, output.tbl = output, join.by = c("from", "to")) |>
     #Can't use output.IDcolumn because it only allows one col (and we need to know the name)
     dplyr::select(-"from", -"to")
 
 }
 
-#' @describeIn fetch_family Fetch mean temperature from a weather station during a given period
+#' Fetch mean temperature from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
@@ -77,7 +76,7 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
 #' @examples
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
-#'            station = "jua") %>%
+#'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_temp.mean(from = from, to = to, station = station))
 fetch_weather_temp.mean <- function(from = NULL, to = NULL, at = NULL,
                                     station = NULL, location = NULL) {
@@ -87,7 +86,7 @@ fetch_weather_temp.mean <- function(from = NULL, to = NULL, at = NULL,
 
 }
 
-#' @describeIn fetch_family Fetch max temperature from a weather station during a given period
+#' Fetch max temperature from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
@@ -97,7 +96,7 @@ fetch_weather_temp.mean <- function(from = NULL, to = NULL, at = NULL,
 #' @examples
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
-#'            station = "jua") %>%
+#'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_temp.max(from = from, to = to, station = station))
 fetch_weather_temp.max <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
@@ -107,7 +106,7 @@ fetch_weather_temp.max <- function(from = NULL, to = NULL, at = NULL,
 
 }
 
-#' @describeIn fetch_family Fetch min temperature from a weather station during a given period
+#' Fetch min temperature from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
@@ -117,7 +116,7 @@ fetch_weather_temp.max <- function(from = NULL, to = NULL, at = NULL,
 #' @examples
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
-#'            station = "jua") %>%
+#'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_temp.min(from = from, to = to, station = station))
 fetch_weather_temp.min <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
@@ -127,7 +126,7 @@ fetch_weather_temp.min <- function(from = NULL, to = NULL, at = NULL,
 
 }
 
-#' @describeIn fetch_family Fetch standard deviation of temperature from a weather station during a given period
+#' Fetch standard deviation of temperature from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
@@ -138,7 +137,7 @@ fetch_weather_temp.min <- function(from = NULL, to = NULL, at = NULL,
 #' @examples
 #' #Determine mean of temperature and rainfall from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
-#'            station = "jua") %>%
+#'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_temp.sd(from = from, to = to, station = station))
 fetch_weather_temp.sd <- function(from = NULL, to = NULL, at = NULL,
                                   station = NULL, location = NULL) {
@@ -148,7 +147,7 @@ fetch_weather_temp.sd <- function(from = NULL, to = NULL, at = NULL,
 
 }
 
-#' @describeIn fetch_family Fetch mean rainfall from a weather station during a given period
+#' Fetch mean rainfall from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
@@ -158,7 +157,7 @@ fetch_weather_temp.sd <- function(from = NULL, to = NULL, at = NULL,
 #' @examples
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
-#'            station = "jua") %>%
+#'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_rain.mean(from = from, to = to, station = station))
 fetch_weather_rain.mean <- function(from = NULL, to = NULL, at = NULL,
                                     station = NULL, location = NULL) {
@@ -168,7 +167,7 @@ fetch_weather_rain.mean <- function(from = NULL, to = NULL, at = NULL,
 
 }
 
-#' @describeIn fetch_family Fetch max rainfall from a weather station during a given period
+#' Fetch max rainfall from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
@@ -178,7 +177,7 @@ fetch_weather_rain.mean <- function(from = NULL, to = NULL, at = NULL,
 #' @examples
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
-#'            station = "jua") %>%
+#'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_rain.max(from = from, to = to, station = station))
 fetch_weather_rain.max <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
@@ -188,7 +187,7 @@ fetch_weather_rain.max <- function(from = NULL, to = NULL, at = NULL,
 
 }
 
-#' @describeIn fetch_family Fetch min rainfall from a weather station during a given period
+#' Fetch min rainfall from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
@@ -198,7 +197,7 @@ fetch_weather_rain.max <- function(from = NULL, to = NULL, at = NULL,
 #' @examples
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
-#'            station = "jua") %>%
+#'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_rain.min(from = from, to = to, station = station))
 fetch_weather_rain.min <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
@@ -208,7 +207,7 @@ fetch_weather_rain.min <- function(from = NULL, to = NULL, at = NULL,
 
 }
 
-#' @describeIn fetch_family Fetch standard deviation of rainfall from a weather station during a given period
+#' Fetch standard deviation of rainfall from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
@@ -219,7 +218,7 @@ fetch_weather_rain.min <- function(from = NULL, to = NULL, at = NULL,
 #' @examples
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
-#'            station = "jua") %>%
+#'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_rain.sd(from = from, to = to, station = station))
 fetch_weather_rain.sd <- function(from = NULL, to = NULL, at = NULL,
                                   station = NULL, location = NULL) {

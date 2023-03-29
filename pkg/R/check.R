@@ -1,4 +1,4 @@
-#' @describeIn check_family Check weather station names are valid.
+#' Check weather station names are valid.
 #'
 #' @return A character vector of weather station names
 #' @export
@@ -30,7 +30,7 @@ check_function_arg.station <- function(station){
 }
 
 
-#' @describeIn check_family Check weather station locations are valid.
+#' Check weather station locations are valid.
 #'
 #' @return A character vector of weather station locations
 #' @export
@@ -63,7 +63,7 @@ check_function_arg.location.weather <- function(location){
 
 }
 
-#' @describeIn check_family Check input variable exist in the weather dataset
+#' Check input variable exist in the weather dataset
 #'
 #' @return A character vector of column names
 #' @export
@@ -72,7 +72,7 @@ check_function_arg.location.weather <- function(location){
 #' check_function_arg.variable.weather(c("temp", "rain"))
 check_function_arg.variable.weather <- function(variable, .fill = TRUE){
 
-  possible_variable_df <- data.frame(possible_variable = c("air_temp", "precip", "precip_max_hourly",
+  possible_variable_df <- dplyr::tibble(possible_variable = c("air_temp", "precip", "precip_max_hourly",
                                                            "relative_humidity", "atmospheric_pressure",
                                                            "battery_percent"),
                                      ## Need to convert precip to regex internally to distinguish between two precip metrics

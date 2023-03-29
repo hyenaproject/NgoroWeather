@@ -1,3 +1,6 @@
+#' Build weather report
+#'
+#' @inheritParams arguments
 build_package_weather.report <- function(output = "pdf", args.vignette = list(), overwrite = FALSE, verbose = FALSE,
                                          devtools.ok = TRUE, require.data = TRUE) {
 

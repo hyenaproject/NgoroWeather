@@ -1,4 +1,4 @@
-#' @describeIn create_family Create a table of the meta-data attribute of a dataframe.
+#' Create a table of the meta-data attribute of a dataframe.
 #'
 #' @return Tibble of meta-data information.
 #' @export
@@ -17,7 +17,7 @@ create_tbl_metadata <- function(input.tbl){
 
 }
 
-#' @describeIn create_family Create a table of all weather data at 30 min intervals
+#' Create a table of all weather data at 30 min intervals
 #'
 #' @return Tibble of meta-data information.
 #' @export
@@ -51,8 +51,8 @@ create_weather_raw.table <- function(input.folder){
     station |>
       ## Join relationship is many-to-many (multiple records per station/site and multiple activity periods)
       dplyr::left_join(weather_station_activity, by = c("station_name", "site_name"), relationship = "many-to-many") |>
-      dplyr::filter(lubridate::as_date(date_time) >= start_date & lubridate::as_date(date_time) <= end_date) |>
-      dplyr::select(-start_date, -end_date, -comment)
+      dplyr::filter(lubridate::as_date(.data$date_time) >= .data$start_date & lubridate::as_date(.data$date_time) <= .data$end_date) |>
+      dplyr::select(-"start_date", -"end_date", -"comment")
 
   })
 
@@ -65,6 +65,9 @@ create_weather_raw.table <- function(input.folder){
 
 }
 
+#' Create summary statistics of weather
+#'
+#' @inheritParams arguments
 create_crater_weather.summary.table <- function(resolution = "day",
                                                 from = NULL, to = NULL, at = NULL,
                                                 variable = c("air_temp", "precip"),
@@ -120,7 +123,7 @@ create_crater_weather.summary.table <- function(resolution = "day",
 
 }
 
-#' @describeIn create_family Create a table of weather data in a given date range
+#' Create a table of weather data in a given date range
 #'
 #' @return Tibble of weather data
 #' @export
