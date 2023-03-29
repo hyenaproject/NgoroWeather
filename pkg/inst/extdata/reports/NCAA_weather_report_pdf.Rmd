@@ -1,0 +1,1111 @@
+---
+title: \Huge Weather Data Report
+author: "Ngorongoro Hyena Project"
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    extra_dependencies: ["flafter", "float"]
+geometry: "left=2cm,right=2cm,top=2cm,bottom=2cm"
+header-includes:
+  #Make roboto the default sans font applied in doc
+  #We can add different versions of roboto in text with e.g. \robotomono{} or \robotolight{}
+  - \usepackage[sfdefault]{roboto}
+  - \usepackage{geometry}
+---
+
+```{r load_pkgs, include = FALSE}
+
+library(hyenaR)
+library(NgoroWeather)
+library(here)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(lubridate)
+library(ggplot2)
+library(ggtext)
+library(patchwork)
+library(gt)
+library(sf)
+library(showtext)
+library(kableExtra)
+
+```
+
+```{r knitr_opts, include = FALSE}
+
+knitr::opts_chunk$set(fig.showtext=TRUE, fig.pos = "h!", out.extra = "", fig.align='center', fig.height=4, fig.width=5.6)
+
+```
+
+```{r load_fonts, include = FALSE}
+
+#In pdf we need to use showtext
+font_add_google(name = "Montserrat", family = "Montserrat100", regular.wt = 100, bold.wt = 200)
+font_add_google(name = "Montserrat", family = "Montserrat200", regular.wt = 200, bold.wt = 300)
+font_add_google(name = "Montserrat", family = "Montserrat300", regular.wt = 300, bold.wt = 400)
+font_add_google(name = "Montserrat", family = "Montserrat400", regular.wt = 400, bold.wt = 500)
+font_add_google(name = "Montserrat", family = "Montserrat500", regular.wt = 500, bold.wt = 600)
+font_add_google(name = "Montserrat", family = "Montserrat600", regular.wt = 600, bold.wt = 700)
+font_add_google(name = "Montserrat", family = "Montserrat700", regular.wt = 700, bold.wt = 800)
+font_add_google(name = "Montserrat", family = "Montserrat800", regular.wt = 800, bold.wt = 900)
+font_add_google(name = "Montserrat", family = "Montserrat900", regular.wt = 900, bold.wt = 900)
+showtext_auto()
+showtext_opts(dpi = 300)
+
+```
+
+```{r load_db, include=FALSE}
+load_package_database.weather(input.folder = "/Users/liam/Desktop/Crater_data",
+                                # system.file("extdata/working_weather",
+                                #                     package = "NgoroWeather"),
+                              overwrite.db = "yes")
+```
+
+```{r jackalhill_damage, include=FALSE}
+## Update sf_hyenaR to match new knowledge about jackal hill damage
+# sf_hyenaR$weather_stations$end_date[5] <- as.Date("2023-01-11")
+```
+
+```{r, include = FALSE}
+
+#For now, just use all data. (we leave location/station blank to return all locations)
+input_data <- create_crater_weather.table(variable = c("air_temp", "precip")) |> 
+  # Convert locations to title case for text
+  dplyr::mutate(site_name_title = dplyr::case_when(site_name == "jackal_hill" ~ "Jackal Hill",
+                                                   site_name == "lemala_rim" ~ "Lemala (Rim)",
+                                                   TRUE ~ stringr::str_to_title(site_name)))
+
+all_names <- unique(input_data$site_name_title)
+
+start_date <- min(lubridate::as_date(input_data$date_time))
+end_date   <- max(lubridate::as_date(input_data$date_time))
+
+days_per_station <- input_data |> 
+  mutate(date = lubridate::as_date(date_time, tz = "Africa/Dar_es_Salaam")) |> 
+  group_by(site_name) |> 
+  summarise(n = length(unique(date)), .groups = "drop")
+
+total_days <- sum(days_per_station$n)
+
+```
+
+-----
+
+# \Large Introduction
+
+\begin{normalsize}
+This report gives a summary of weather data collected in Ngorongoro Crater by the Ngorongoro Hyena Project between `r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`. We now have a network of `r length(all_names)` weather stations installed at different sites around the Ngorongoro Crater. These weather stations have been collecting data on temperature, rainfall, and humidity, giving us a detailed picture of weather conditions in Ngorongoro Crater that can help inform conservation management. Below are some key facts from our data collection so far:
+\end{normalsize}
+
+\vspace{-1.5cm}
+
+```{r nr_days_BAN, echo = FALSE, fig.height=2, fig.width=5, fig.align='center'}
+
+number_days <- as.numeric(end_date - start_date)
+
+ggplot() +
+  geom_richtext(data = NULL, aes(x = 0.5, y = 0.5, label = glue::glue("<span style='color:grey10; font-size:30pt'>**{BAN} days**</span><br><span style='color:grey25; font-size:10pt'>of weather data collected</span>",
+                                                                      BAN = number_days,
+                                                                      date = format(start_date, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500") +
+  scale_y_continuous(limits = c(0.45, 0.55)) +
+  theme_void() +
+  theme(plot.margin = margin())
+
+```
+
+\vspace{-2cm}
+
+```{r max_temp_BAN, echo = FALSE, fig.height=2, fig.width=5, fig.align='center'}
+
+max_temp <- input_data |> 
+  filter(air_temp == max(air_temp, na.rm = TRUE))
+
+ggplot() +
+  geom_richtext(data = max_temp, aes(x = 0.5, y = 0.5, label = glue::glue("<span style='color:#D2042D; font-size:30pt'>**{BAN}°C**</span><br><span style='color:grey25; font-size:10pt'>Highest recorded temperature<br>{site}<br>{date}</span>",
+                                                                          BAN = air_temp,
+                                                                          site = site_name_title,
+                                                                          date = format(date_time, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500") +
+  scale_y_continuous(limits = c(0.45, 0.55)) +
+  theme_void()+
+  theme(plot.margin = margin())
+
+```
+
+\vspace{-2cm}
+
+```{r min_temp_BAN, echo = FALSE, fig.height=2, fig.width=5, fig.align='center'}
+
+min_temp <- input_data |> 
+  filter(air_temp == min(air_temp, na.rm = TRUE))
+
+ggplot() +
+  geom_richtext(data = min_temp, aes(x = 0.5, y = 0.5, label = glue::glue("<span style='color:#0DA2FF; font-size:30pt'>**{BAN}°C**</span><br><span style='color:grey25; font-size:10pt'>Lowest recorded temperature<br>{site}<br>{date}</span>",
+                                                                          BAN = air_temp,
+                                                                          site = site_name_title,
+                                                                          date = format(date_time, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500") +
+  scale_y_continuous(limits = c(0.45, 0.55)) +
+  theme_void()+
+  theme(plot.margin = margin())
+
+```
+
+\vspace{-2cm}
+
+```{r max_rain_BAN, echo = FALSE, fig.height=2, fig.width=5, fig.align='center'}
+
+daily_sum <- input_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(site_name_title, date) |> 
+  summarise(total_rain = sum(precip), .groups = "drop")
+
+max_rain <- daily_sum |> 
+  filter(total_rain == max(total_rain, na.rm = TRUE))
+
+ggplot() +
+  geom_richtext(data = max_rain, aes(x = 0.5, y = 0.5, label = glue::glue("<span style='color:#1434A4; font-size:30pt'>**{BAN}mm**</span><br><span style='color:grey25; font-size:10pt'>Highest recorded daily rainfall<br>{site}<br>{date}</span>",
+                                                                          BAN = total_rain,
+                                                                          site = site_name_title,
+                                                                          date = format(date, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500") +
+  scale_y_continuous(limits = c(0.45, 0.55)) +
+  theme_void()+
+  theme(plot.margin = margin())
+
+```
+
+<!-- In the following sections you will find more details on the weather data collected: -->
+
+<!-- - [**Weather station details**](#station_details) provides technical details of the weather stations used, including location and technical specifications. -->
+
+<!-- - [**Data summary**](#data_summary) provides summarised information on temperature and rainfall collected across all stations. -->
+
+<!-- - [**Detailed weather data by site**](#per_station) provides detailed temperature and weather data for each weather station individually. -->
+
+\newpage
+
+# \Large Weather station details {.tabset .tabset-fade #station_details}
+
+\vspace{5mm}
+
+```{r static_map, fig.height = 10, fig.width = 10, echo=FALSE, warning=FALSE}
+
+crater_rim <- hyenaR::sf_hyenaR$rim_polygon
+
+crater_contours <- hyenaR::sf_hyenaR$crater_contours
+
+station_points <- weather_station_activity |> 
+  bind_cols(sf::st_coordinates(.)) |> 
+  #Again, use title case
+  dplyr::mutate(location_title = dplyr::case_when(site_name == "jackal_hill" ~ "Jackal Hill",
+                                                  site_name == "lemala_rim" ~ "Lemala (Rim)",
+                                                  TRUE ~ stringr::str_to_title(site_name)))
+
+lakes <- hyenaR::sf_hyenaR$waterbodies_lakes
+
+#Only show roads INSIDE the crater
+roads <- hyenaR::sf_hyenaR$roads_crater |> 
+  sf::st_crop(crater_rim)
+
+rivers <- hyenaR::sf_hyenaR$rivers_all |> 
+  sf::st_crop(crater_rim)
+
+ggplot() +
+  geom_sf(data = crater_rim, fill = "#FFF2AF", colour = NA) +
+  geom_sf(data = crater_contours, fill = "#FFF2AF", alpha = 0.25) +
+  geom_sf(data = lakes, fill = "#AADAFF", colour = NA) +
+  geom_sf(data = station_points, colour = "red", size = 3) +
+  geom_text(data = station_points, aes(x = X, y = Y + 0.0075, label = toupper(location_title)),
+            family = "Montserrat500", fontface = "bold", colour = "grey10",
+            size = 6) +
+  coord_sf(clip = "off") +
+  labs(title = "Location of weather stations",
+       subtitle = "Lines show elevation contours at 100m") +
+  theme_void() +
+  theme(plot.title = element_text(family = "Montserrat500", colour = "grey10", face = "bold",
+                                  size = 20),
+        plot.subtitle = element_text(family = "Montserrat500", colour = "grey25",
+                                     size = 15),
+        plot.margin = margin(r = 27, l = 15,
+                             b = 15, t = 15))
+
+```
+
+\newpage
+
+\vspace{2mm}
+
+## \large Technical specifications
+
+```{r tech_specs, echo = FALSE}
+
+specs <- data.frame("Data Logger" = c("Meter Group", "ZL6", "-", "-", "Solar powered data logger\nwith inbuilt GPS and 8MB of data storage"),
+                    "Temperature Sensor" = c("Meter Group", "ATMOS 14", "30min", "0.1°C", "Temperature and humidity sensor\nwith radiation shielding"),
+                    "Rain Gauge" = c("Meter Group", "ECRN-100", "30min", "0.2mm", "Tipping bucket rain gauge"))
+
+rownames(specs) <- c("Company", "Model", "Data collection frequency", "Resolution", "Details")
+
+
+specs |> 
+  kbl(booktabs = TRUE) |> 
+  kable_styling(full_width = TRUE) |> 
+  footnote(general = "Data from Meter Group")
+
+```
+
+\vspace{2cm}
+
+```{r, echo=FALSE,out.width="40%", out.height="40%",fig.cap="Weather station photos. Top Left: Acacia. Top Right: Ngoitokitok. Bottom Left: Lemala (Rim). Bottom Right: Jackal Hill",fig.show='hold',fig.align='center'}
+knitr::include_graphics(path = c("assets/acacia_close_small_crop.jpg", "assets/ngoitokitok_close_small_crop.jpg", "assets/lemalarim_small_crop.jpg", "assets/jackalhill_close_small_crop.jpg"),
+                        auto_pdf = TRUE)
+```
+
+\newpage
+
+-----
+
+# \Large Data summary <br> (`r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`) {#data_summary}
+
+-----
+
+## \large Temperature
+
+### \normalsize Mean temperature (°C) over time
+
+\begin{normalsize}
+The below plot shows temperature on the floor of Ngorongoro Crater between `r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`. It shows the daily mean temperature calculated across all stations (solid black line) and the daily temperature range (shaded areas). The table beneath the plot shows monthly mean temperature for each station separately, including data collected on the Ngorongoro Crater rim. Cell colours help to distinguish cooler months (yellow) from warmer months (red).
+\end{normalsize}
+
+\vspace{2cm}
+
+```{r temp_graph, fig.width=10, fig.height=7, echo = FALSE}
+
+#Determine mean of each day from across both stations
+daily_mean <- input_data |> 
+  #Only deal with stations on crater floor
+  filter(site_name != "lemala_rim") |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
+  summarise(daily_mean = mean(air_temp),
+            .groups = "drop") |> 
+  mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam")) |> 
+  #Remove the last day because it can often be a bit weird if we don't have all data
+  slice(-n())
+
+#Take daily max and min from each station (30min is too frequent)
+thinned_data <- input_data |> 
+  filter(site_name != "lemala_rim") |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
+  summarise(min = min(air_temp),
+            max = max(air_temp),
+            .groups = "drop")
+
+ggplot() +
+  geom_ribbon(data = thinned_data, aes(x = date, ymin = min, ymax = max), alpha = 0.5, fill = "grey20") +
+  geom_line(data = daily_mean, aes(x = date, y = daily_mean), linewidth = 1, colour = "black") +
+  geom_text(data = daily_mean |> 
+              slice(n()), aes(x = date + 2, y = daily_mean, label = "AVG"),
+            hjust = 0, family = "Montserrat600", fontface = "bold") + 
+  # geom_text(data = data.frame(x = as.Date("2022-01-20"),
+  #                             y = 17.6 + c(11.5, -10),
+  #                             label = c("ACACIA", "NGOITOKITOK")),
+  #           aes(x = x, y = y, label = label, colour = label),
+  #           hjust = 0.15, family = "Montserrat600", fontface = "bold", alpha = 0.5) +
+  # scale_fill_manual(values = c("grey25", "grey75")) +
+  # scale_colour_manual(values = c("grey25", "grey75")) +
+  scale_x_date(name = "", date_labels = "%d/%m/%Y", limits = c(as.Date(NA), Sys.Date())) +
+  scale_y_continuous(name = "Air temperature (°C)", limits = c(0, 40), expand = c(0, 0)) +
+  coord_cartesian(clip = "off") +
+  labs(title = paste0("Temperature on Ngorongoro Crater floor ranged between <br>", paste(paste0(round(range(filter(input_data, site_name != "lemala_rim")$air_temp), 0), "°C"), collapse = " - ")),
+       subtitle = "Grey shaded area shows daily range.<br>Solid black line is the daily mean temperature across all stations.") +
+  theme_classic() +
+  theme(legend.position = "none",
+        plot.margin = margin(r = 10,
+                             l = 10,
+                             t = 10,
+                             b = 10),
+        plot.title = element_markdown(family = "Montserrat600", size = 18),
+        plot.subtitle = element_markdown(family = "Montserrat300", size = 14),
+        axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"))
+
+```
+
+<!-- \renewcommand{\arraystretch}{1.5} -->
+
+```{r temp_heatmap, echo = FALSE}
+
+## Create list of possible dates for each station
+possible_dates <- input_data |> 
+  group_by(site_name_title) |> 
+  reframe(date = seq.Date(from = lubridate::floor_date(min(as.Date(date_time)), unit = "month"),
+                             to = lubridate::ceiling_date(max(as.Date(date_time)), unit = "month") - 1, by = "day"))
+
+daily_data <- input_data |>
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(site_name_title, date) |> 
+  summarise(daily_mean = mean(air_temp), .groups = "drop")
+
+summary_data <- possible_dates |> 
+  left_join(daily_data, by = c("site_name_title", "date")) |> 
+  mutate(month_dbl = lubridate::year(date)*12 + lubridate::month(date),
+         month = format(date, "%b %Y")) |> 
+  group_by(site_name_title, month) |> 
+  ## Filter cases where >=1 week of data is missing
+  filter(sum(is.na(daily_mean)) < 7) |> 
+  summarise(monthly_mean = mean(daily_mean, na.rm = TRUE),
+            month_dbl = first(month_dbl), .groups = "drop") |>
+  mutate(monthly_mean = round(monthly_mean, 2),
+         month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) |> 
+  select(-month_dbl) |>
+  pivot_wider(names_from = site_name_title, values_from = monthly_mean) |>
+  mutate(month = toupper(month)) |>
+  rename_all(.funs = toupper) |> 
+  arrange(lubridate::my(MONTH)) |> 
+  tibble::column_to_rownames(var = "MONTH") |> 
+  #arrange cols
+  select(ACACIA, NGOITOKITOK, `JACKAL HILL`, `LEMALA (RIM)`)
+
+temp_palette <- scales::col_numeric(c("#FFC300", "#FF5733", "#C70039", "#900C3F", "#581845"), domain = c(10, 30), na.color = "#cccccc")
+
+summary_data |> 
+  kbl(booktabs = TRUE, linesep = "", caption = "Monthly mean temperature (°C)") |> 
+  kable_styling(full_width = FALSE, font_size = 10) |> 
+  # footnote(general = "Average daily mean temperature") |> 
+  column_spec(2,
+              color="white",
+              background = temp_palette(pull(summary_data, 1)),
+              popover=paste("am:", pull(summary_data, 1)),
+              width = "10em") |> 
+  column_spec(3,
+              color="white",
+              background = temp_palette(pull(summary_data, 2)),
+              popover=paste("am:", pull(summary_data, 2)),
+              width = "10em") |> 
+  column_spec(4,
+              color="white",
+              background = temp_palette(pull(summary_data, 3)),
+              popover=paste("am:", pull(summary_data, 3)),
+              width = "10em") |> 
+  column_spec(5,
+              color="white",
+              background = temp_palette(pull(summary_data, 4)),
+              popover=paste("am:", pull(summary_data, 4)),
+              width = "10em")
+
+```
+
+\newpage
+\newpage
+
+### \normalsize Daily temperature variation (°C)
+
+\begin{normalsize}
+The below plot shows temperature variation within Ngorongoro Crater over a 24h period using data collected from `r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`. The plot shows mean temperature calculated across all stations on the Crater floor (solid black line) and the temperature range (shaded areas) at 30 minute intervals.
+\end{normalsize}
+
+\vspace{5mm}
+
+```{r daily_temp_graph, fig.width=10, fig.height=7, echo = FALSE}
+
+#Determine mean of each 30min from across both stations
+time_mean <- input_data |> 
+  #Only deal with stations on crater floor
+  filter(site_name != "lemala_rim") |> 
+  mutate(time_cat = format(date_time, "%H:%M"),
+         time_dbl = lubridate::hour(date_time)*60 + lubridate::minute(date_time)) |> 
+  group_by(time_cat) |> 
+  summarise(time_mean = mean(air_temp),
+            time_dbl = first(time_dbl), .groups = "drop")
+
+#Take daily max and min from each station (30min is too frequent)
+daily_data <- input_data |> 
+  #Only deal with stations on crater floor
+  filter(site_name != "lemala_rim") |> 
+  mutate(date_grp = paste(format(date_time, "%d/%m/%Y"), station_name),
+         time_dbl = lubridate::hour(date_time)*60 + lubridate::minute(date_time))
+
+#Alternative using ribbon
+daily_range <- input_data |> 
+  mutate(time_cat = format(date_time, "%H:%M"),
+         time_dbl = lubridate::hour(date_time)*60 + lubridate::minute(date_time)) |> 
+  group_by(time_cat) |> 
+  summarise(time_min = min(air_temp),
+            time_max = max(air_temp),
+            time_dbl = first(time_dbl), .groups = "drop")
+
+ggplot() +
+  geom_ribbon(data = daily_range, aes(x = time_dbl, ymin = time_min, ymax = time_max),
+              alpha = 0.5, fill = "grey20") +
+  geom_line(data = time_mean, aes(x = time_dbl, y = time_mean), linewidth = 1) +
+  geom_text(data = slice(time_mean, n()), aes(x = time_dbl + 10, y = time_mean, label = "AVG"),
+            hjust = 0, family = "Montserrat600", fontface = "bold") +
+  labs(title = paste0("Over a 24h period temperature on Ngorongoro Crater floor<br> ranged between ", paste(paste0(round(c(min(daily_range$time_min),
+                                                                                                                          max(daily_range$time_max)), 0), "°C"), collapse = " - ")),
+       subtitle = "Grey shaded area shows range at 30 minute intervals.<br>Solid black line is the mean temperature across all stations.") +
+  # geom_text(data = data.frame(x = 1080,
+  #                             y = 20 + c(11.5, -10),
+  #                             label = c("ACACIA", "NGOITOKITOK")),
+  #           aes(x = x, y = y, label = label, colour = label),
+  #           hjust = 0.15, family = "Montserrat600", fontface = "bold", alpha = 0.5) +
+  # scale_fill_manual(values = c("grey25", "grey75")) +
+  # scale_colour_manual(values = c("grey25", "grey75")) +
+  scale_x_continuous(name = "",
+                     limits = c(0, 1445),
+                     breaks = seq(0, 1440, 120),
+                     labels = paste0(stringr::str_pad(seq(0, 24, 2), width = 2, pad = "0"), ":00"),
+                     expand = c(0, 0)) +
+  scale_y_continuous(name = "Air temperature (°C)", limits = c(0, 40), expand = c(0, 0)) +
+  coord_cartesian(clip = "off", expand = TRUE) +
+  theme_classic() +
+  theme(legend.position = "none",
+        plot.margin = margin(r = 18,
+                             l = 10,
+                             t = 10,
+                             b = 10),
+        plot.title = element_markdown(family = "Montserrat600", size = 18),
+        plot.subtitle = element_markdown(family = "Montserrat300", size = 14),
+        axis.text.y = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.text.x = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"))
+
+```
+
+\newpage
+
+-----
+
+## \large Rainfall
+
+### \normalsize Mean rainfall (mm)
+
+\begin{normalsize}
+The below plot shows the mean daily rainfall on the floor of Ngorongoro Crater in each month using data collected from `r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`. The table beneath the plot shows the mean daily rainfall values for each station separately. Cell colours help to distinguish drier months (light blue) from wetter months (dark blue).
+\end{normalsize}
+
+\vspace{5mm}
+
+```{r rain_graph_mm, fig.width=12, fig.height=8, echo = FALSE}
+
+summary_data <- input_data |>
+  #Only deal with stations on crater floor
+  filter(site_name != "lemala_rim") |>
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date, site_name_title) |> 
+  summarise(daily_total = sum(precip), .groups = "drop") |> 
+  mutate(month_dbl = lubridate::year(date)*12 + lubridate::month(date),
+         month = as.factor(format(date, "%b %Y"))) |> 
+  group_by(month) |> 
+  summarise(mean_rain = mean(daily_total),
+            se = sd(daily_total)/sqrt(n()),
+            month_dbl = first(month_dbl), .groups = "drop") |>
+  mutate(mean_rain = round(mean_rain, 2),
+         month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) |> 
+  select(-month_dbl)
+
+ggplot() +
+  geom_col(data = summary_data, aes(x = month, y = mean_rain), colour = "black",
+           position = position_dodge(width = 0.75), width = 0.75, alpha = 0.5) +
+  geom_errorbar(data = summary_data, aes(x = month, ymin = mean_rain - se, ymax = mean_rain + se),
+                width = 0, linewidth = 0.75,
+                position = position_dodge(width = 0.75),
+                colour = "grey10") +
+    labs(title = paste0("Daily mean rainfall in Ngorongoro Crater ranged between <br>", paste(paste0(round(range(summary_data$mean_rain), 0), "mm"), collapse = " - ")),
+       subtitle = "Grey bars shows monthly mean rainfall (mm).<br>Errorbars represent standard errors.") +
+  # geom_text(data = data.frame(x = 3.5,
+  #                             y = 10 + c(0.35, -0.35),
+  #                             label = c("ACACIA", "NGOITOKITOK")),
+  #           aes(x = x, y = y, label = label, colour = label),
+  #           hjust = 0, family = "Montserrat600", fontface = "bold", alpha = 0.5) +
+  # scale_fill_manual(values = c("grey25", "grey75")) +
+  # scale_colour_manual(values = c("grey25", "grey75")) +
+  scale_x_discrete(name = "") +
+  scale_y_continuous(name = "Mean daily rainfall (mm)", expand = c(0, 0)) +
+  theme_classic() +
+  theme(legend.position = "none",
+        plot.title = element_markdown(family = "Montserrat600", size = 18),
+        plot.subtitle = element_markdown(family = "Montserrat300", size = 14),
+        axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.text.x = element_text(size = 12, family = "Montserrat500", colour = "grey10",
+                                   angle = 90),
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"),
+        axis.line.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+```
+
+```{r rain_heatmap, echo = FALSE}
+
+## Create list of possible dates for each station
+possible_dates <- input_data |> 
+  group_by(site_name_title) |> 
+  reframe(date = seq.Date(from = lubridate::floor_date(min(lubridate::as_date(date_time)), unit = "month"),
+                             to = lubridate::ceiling_date(max(lubridate::as_date(date_time)), unit = "month") - 1, by = "day"))
+
+daily_data <- input_data |>
+  mutate(date = lubridate::as_date(date_time, tz = "Africa/Dar_es_Salaam")) |> 
+  group_by(site_name_title, date) |> 
+  summarise(daily_total = sum(precip), .groups = "drop")
+
+summary_data <- possible_dates |> 
+  left_join(daily_data, by = c("site_name_title", "date")) |> 
+  mutate(month_dbl = lubridate::year(date)*12 + lubridate::month(date),
+         month = as.factor(format(date, "%b %Y"))) |> 
+  group_by(site_name_title, month) |> 
+  ## Filter cases where >=1 week of data is missing
+  filter(sum(is.na(daily_total)) < 7) |> 
+  summarise(mean_rain = mean(daily_total, na.rm = TRUE),
+            month_dbl = first(month_dbl), .groups = "drop") |>
+  mutate(mean_rain = round(mean_rain, 2),
+         month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) |> 
+  select(-month_dbl) |> 
+  pivot_wider(names_from = site_name_title, values_from = mean_rain)  |> 
+  mutate(month = toupper(month)) |>
+  rename_all(.funs = toupper) |> 
+  arrange(lubridate::my(MONTH)) |> 
+  tibble::column_to_rownames(var = "MONTH") |> 
+  #arrange cols
+  select(ACACIA, NGOITOKITOK, `JACKAL HILL`, `LEMALA (RIM)`)
+
+rain_palette <- scales::col_numeric(c("#FFFFFF", "#DFF6FF", "#5D8BF4", "#2D31FA", "#051367"), domain = c(0, 10), na.color = "#cccccc")
+
+summary_data |> 
+  kbl(booktabs = TRUE, caption = "Monthly mean rainfall (mm)",
+      linesep = "") |> 
+  kable_styling(full_width = FALSE, font_size = 10) |> 
+  # footnote(general = "Data from Meter Group") |> 
+  column_spec(2,
+              color="black",
+              background = rain_palette(pull(summary_data, 1)),
+              popover=paste("am:", pull(summary_data, 1)),
+              width = "10em") |> 
+  column_spec(3,
+              color="black",
+              background = rain_palette(pull(summary_data, 2)),
+              popover=paste("am:", pull(summary_data, 2)),
+              width = "10em") |> 
+    column_spec(4,
+              color="black",
+              background = rain_palette(pull(summary_data, 3)),
+              popover=paste("am:", pull(summary_data, 3)),
+              width = "10em") |> 
+    column_spec(5,
+              color="black",
+              background = rain_palette(pull(summary_data, 4)),
+              popover=paste("am:", pull(summary_data, 4)),
+              width = "10em")
+
+```
+
+\newpage
+
+### \normalsize Number of rain days (>1mm)
+
+\begin{normalsize}
+The below plot shows the number of rain days recorded each month on the floor of Ngorongoro Crater (days with rainfall >1mm) using data collected from `r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`.
+\end{normalsize}
+
+\vspace{5mm}
+
+```{r rain_graph_days, fig.width=12, fig.height=7, echo = FALSE}
+
+summary_data <- input_data |>
+  #Only deal with stations on crater floor
+  filter(site_name != "lemala_rim") |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  group_by(site_name_title, date) |> 
+  summarise(daily_total = sum(precip), .groups = "drop") |> 
+  mutate(month = as.factor(format(date, "%b %Y"))) |> 
+  group_by(site_name_title, month) |> 
+  summarise(rain_days = sum(daily_total > 1), .groups = "drop") |> 
+  group_by(month) |> 
+  summarise(se = sd(rain_days),
+            rain_days = mean(rain_days)) |> 
+  mutate(month = forcats::fct_reorder(month, .x = lubridate::my(month), .desc = FALSE))
+  
+  # group_by(date) |> 
+  # summarise(daily_total = sum(precip), .groups = "drop") |>
+  # mutate(month_dbl = lubridate::year(date)*12 + lubridate::month(date),
+  #        month = as.factor(format(date, "%b %Y"))) |>
+  # group_by(month) |>
+  # summarise(rain_days = sum(daily_total > 1),
+  #           month_dbl = first(month_dbl), .groups = "drop") |>
+  # mutate(rain_days = round(rain_days, 2),
+  #        month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) |>
+  # select(-month_dbl)
+
+ggplot() +
+  geom_col(data = summary_data, aes(x = month, y = rain_days),
+           colour = "black", width = 0.75,
+           position = position_dodge(width = 0.75), alpha = 0.5) +
+  geom_errorbar(data = summary_data, aes(x = month, ymin = rain_days - se, ymax = rain_days + se),
+                width = 0, linewidth = 0.75,
+                position = position_dodge(width = 0.75),
+                colour = "grey10") +
+  labs(title = paste0("Mean monthly rain days (>1mm) in Ngorongoro Crater ranged between <br>", paste(paste0(round(range(summary_data$rain_days), 0), " days"), collapse = " - ")),
+       subtitle = "Grey bars shows monthly montly rain days (>1mm).<br>Errorbars represent standard errors.") +
+  # geom_text(data = data.frame(x = 1,
+  #                             y = 10 + c(0.35, -0.35),
+  #                             label = c("ACACIA", "NGOITOKITOK")),
+  #           aes(x = x, y = y, label = label, colour = label),
+  #           hjust = 0, family = "Montserrat600", fontface = "bold", alpha = 0.5) +
+  # scale_fill_manual(values = c("grey25", "grey75")) +
+  # scale_colour_manual(values = c("grey25", "grey75")) +
+  scale_x_discrete(name = "") +
+  scale_y_continuous(name = "Mean number of rain days (>1mm)", expand = c(0, 0)) +
+  theme_classic() +
+  theme(legend.position = "none",
+        plot.title = element_markdown(family = "Montserrat600", size = 18),
+        plot.subtitle = element_markdown(family = "Montserrat300", size = 14),
+        axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.text.x = element_text(size = 12, family = "Montserrat500", colour = "grey10",
+                                   angle = 90),
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"),
+        axis.line.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+```
+
+\newpage
+
+-----
+
+# \Large Detailed weather data by site {#per_station}
+
+\begin{normalsize}
+Below we provide more detailed temperature and rainfall plots for each of our `r length(all_names)` stations. For each station two plots are provided: A) Temperature plot. Daily mean temperature (solid black line) and daily temperature range (shaded area). Highest and lowest recorded temperatures are highlighted on the plot. B) Daily rainfall (mm). Highest daily rainfall recorded is highlighted on the plot.
+\end{normalsize}
+
+-----
+
+## \large `r all_names[1]`
+
+```{r temp_graph1, echo = FALSE}
+
+#Site data
+site_data <- input_data |> 
+  filter(site_name_title == all_names[1])
+
+#Determine mean of each day from across both stations
+daily_mean <- site_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
+  summarise(daily_mean = mean(air_temp),
+            period = first(observation_period)) |> 
+  slice(-n())
+
+max_temp <- site_data  |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  filter(air_temp == max(air_temp))
+
+min_temp <- site_data  |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  filter(air_temp == min(air_temp))
+
+temp_range <- site_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
+  summarise(min_temp = min(air_temp),
+            max_temp = max(air_temp),
+            period = first(observation_period))
+
+plot_temp_1 <- ggplot() +
+  geom_ribbon(data = temp_range, aes(x = date, ymin = min_temp, ymax = max_temp,
+                                     group = as.factor(period)), fill = "grey50", alpha = 0.5) +
+  # geom_line(data = site_data, aes(x = date, y = air_temp), colour = "grey75", alpha = 0.75) +
+  geom_line(data = daily_mean, aes(x = date, y = daily_mean,
+                                   group = as.factor(period)), linewidth = 1, colour = "black") +
+  geom_text(data = slice(daily_mean, n()), aes(x = date + lubridate::days(2), y = daily_mean, label = "AVG"),
+            hjust = 0, family = "Montserrat600", fontface = "bold") +
+  geom_richtext(data = max_temp, aes(x = date - lubridate::days(20), y = air_temp + 5,
+                                     label = glue::glue("<span style='color:#D2042D; font-size:15pt'>**{temp}°C**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded temperature<br>{date}</span>",
+                                                        temp = air_temp, date = format(date_time, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = max_temp, aes(x = date - lubridate::days(10), y = air_temp + 2.5,
+  #                                   xend = date, yend = air_temp)) +
+  geom_point(data = max_temp, aes(x = date, y = air_temp), size = 2, colour = "#D2042D") +
+  geom_richtext(data = min_temp, aes(x = date - lubridate::days(24), y = air_temp - 3,
+                                     label = glue::glue("<span style='color:#0DA2FF; font-size:15pt'>**{temp}°C**</span><br><span style='color:grey25; font-size:9pt'>Lowest recorded temperature<br>{date}</span>",
+                                                        temp = air_temp, date = format(date, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = min_temp, aes(x = date - lubridate::days(12), y = air_temp - 1.5,
+  #                                   xend = date, yend = air_temp)) +
+  geom_point(data = min_temp, aes(x = date, y = air_temp), size = 2, colour = "#0DA2FF") +
+  scale_x_date(name = "", date_labels = "%d/%m/%Y", limits = c(as.Date(NA), Sys.Date())) +
+  scale_y_continuous(name = "Air temperature (°C)", limits = c(0, 40), expand = c(0, 0)) +
+  coord_cartesian(clip = "off") +
+  # labs(caption = paste0("Data: ", all_names[1], " weather station collected at 30 min intervals")) +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"))
+
+```
+
+```{r rain_graph1, echo = FALSE}
+
+#Determine mean of each day from across both stations
+daily_sum <- site_data |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
+  summarise(total_rain = sum(precip)) |> 
+  mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
+
+max_rain <- daily_sum |> 
+  filter(total_rain == max(total_rain))
+
+plot_rain_1 <- ggplot() +
+  geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
+  geom_richtext(data = max_rain, aes(x = date_time - lubridate::days(20), y = total_rain + 5,
+                                     label = glue::glue("<span style='color:#1434A4; font-size:15pt'>**{rain}mm**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded daily rainfall<br>{date}</span>",
+                                                        rain = total_rain, date = format(date_time, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
+  #                                   xend = date_time, yend = total_rain)) +
+  geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
+  scale_x_datetime(name = "", date_labels = "%d/%m/%Y") +
+  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
+  labs(caption = paste0("Data: ", all_names[1], " weather station collected at 30 min intervals")) +
+  coord_cartesian(clip = "off") +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"),
+        plot.caption = element_text(hjust = 0))
+
+```
+
+```{r combo_plot_1, echo = FALSE, fig.width=10, fig.height = 9}
+
+plot_temp_1 + plot_rain_1 + patchwork::plot_annotation(tag_levels = "A", tag_suffix = ")") + patchwork::plot_layout(ncol = 1)
+
+```
+
+-----
+
+\newpage
+
+## \large `r all_names[2]`
+
+```{r temp_graph2, echo = FALSE}
+
+#Site data
+site_data <- input_data |>
+  filter(site_name_title == all_names[2])
+
+#Determine mean of each day from across both stations
+daily_mean <- site_data |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  group_by(date) |>
+  summarise(daily_mean = mean(air_temp)) |>
+  slice(-n())
+
+max_temp <- site_data  |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  filter(air_temp == max(air_temp))
+
+min_temp <- site_data  |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  filter(air_temp == min(air_temp))
+
+temp_range <- site_data |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  group_by(date) |>
+  summarise(min_temp = min(air_temp),
+            max_temp = max(air_temp))
+
+plot_temp_2 <- ggplot() +
+  geom_ribbon(data = temp_range, aes(x = date, ymin = min_temp, ymax = max_temp), fill = "grey50", alpha = 0.5) +
+  # geom_line(data = site_data, aes(x = date, y = air_temp), colour = "grey75", alpha = 0.75) +
+  geom_line(data = daily_mean, aes(x = date, y = daily_mean), linewidth = 1, colour = "black") +
+  geom_text(data = slice(daily_mean, n()), aes(x = date + lubridate::days(2), y = daily_mean, label = "AVG"),
+            hjust = 0, family = "Montserrat600", fontface = "bold") +
+  geom_richtext(data = max_temp, aes(x = date - lubridate::days(20), y = air_temp + 5,
+                                     label = glue::glue("<span style='color:#D2042D; font-size:15pt'>**{temp}°C**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded temperature<br>{date}</span>",
+                                                        temp = air_temp, date = format(date_time, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = max_temp, aes(x = date - lubridate::days(10), y = air_temp + 2.5,
+  #                                   xend = date, yend = air_temp)) +
+  geom_point(data = max_temp, aes(x = date, y = air_temp), size = 2, colour = "#D2042D") +
+  geom_richtext(data = min_temp, aes(x = date - lubridate::days(24), y = air_temp - 2,
+                                     label = glue::glue("<span style='color:#0DA2FF; font-size:15pt'>**{temp}°C**</span><br><span style='color:grey25; font-size:9pt'>Lowest recorded temperature<br>{date}</span>",
+                                                        temp = air_temp, date = format(date, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = min_temp, aes(x = date - lubridate::days(12), y = air_temp - 0.75,
+  #                                   xend = date, yend = air_temp)) +
+  geom_point(data = min_temp, aes(x = date, y = air_temp), size = 2, colour = "#0DA2FF") +
+  scale_x_date(name = "", date_labels = "%d/%m/%Y") +
+  scale_y_continuous(name = "Air temperature (°C)", limits = c(0, 40), expand = c(0, 0)) +
+  coord_cartesian(clip = "off") +
+  # labs(caption = paste0("Data: ", all_names[2], " weather station collected at 30 min intervals")) +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"),
+        plot.margin = margin(t = 7, l = 7, b = 7, r = 35))
+
+```
+
+```{r rain_graph2, echo = FALSE}
+
+#Determine mean of each day from across both stations
+daily_sum <- site_data |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  group_by(date) |>
+  summarise(total_rain = sum(precip)) |>
+  mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
+
+max_rain <- daily_sum |>
+  filter(total_rain == max(total_rain))
+
+plot_rain_2 <- ggplot() +
+  geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
+  geom_richtext(data = max_rain, aes(x = date_time - lubridate::days(20), y = total_rain + 5,
+                                     label = glue::glue("<span style='color:#1434A4; font-size:15pt'>**{rain}mm**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded daily rainfall<br>{date}</span>",
+                                                        rain = total_rain, date = format(date_time, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
+  #                                   xend = date_time, yend = total_rain)) +
+  geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
+  scale_x_datetime(name = "", date_labels = "%d/%m/%Y") +
+  labs(caption = paste0("Data: ", all_names[2], " weather station collected at 30 min intervals")) +
+  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
+  coord_cartesian(clip = "off") +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"),
+        plot.caption = element_text(hjust = 0))
+
+```
+
+```{r combo_plot_2, echo = FALSE, fig.width=10, fig.height = 9}
+
+plot_temp_2 + plot_rain_2 + patchwork::plot_annotation(tag_levels = "A", tag_suffix = ")") + patchwork::plot_layout(ncol = 1)
+
+```
+
+-----
+
+\newpage
+
+## \large `r all_names[3]`
+
+```{r temp_graph3, echo = FALSE}
+
+#Site data
+site_data <- input_data |>
+  filter(site_name_title == all_names[3])
+
+#Determine mean of each day from across both stations
+daily_mean <- site_data |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  group_by(date) |>
+  summarise(daily_mean = mean(air_temp)) |>
+  slice(-n())
+
+
+max_temp <- site_data  |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  filter(air_temp == max(air_temp))
+
+min_temp <- site_data  |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  filter(air_temp == min(air_temp))
+
+temp_range <- site_data |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  group_by(date) |>
+  summarise(min_temp = min(air_temp),
+            max_temp = max(air_temp))
+
+plot_temp_3 <- ggplot() +
+  geom_ribbon(data = temp_range, aes(x = date, ymin = min_temp, ymax = max_temp), fill = "grey50", alpha = 0.5) +
+  # geom_line(data = site_data, aes(x = date, y = air_temp), colour = "grey75", alpha = 0.75) +
+  geom_line(data = daily_mean, aes(x = date, y = daily_mean), linewidth = 1, colour = "black") +
+  geom_text(data = slice(daily_mean, n()), aes(x = date + lubridate::days(2), y = daily_mean, label = "AVG"),
+            hjust = 0, family = "Montserrat600", fontface = "bold") +
+  geom_richtext(data = max_temp, aes(x = date - lubridate::days(20), y = air_temp + 5,
+                                     label = glue::glue("<span style='color:#D2042D; font-size:15pt'>**{temp}°C**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded temperature<br>{date}</span>",
+                                                        temp = air_temp, date = format(date_time, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = max_temp, aes(x = date - lubridate::days(10), y = air_temp + 2.5,
+  #                                   xend = date, yend = air_temp)) +
+  geom_point(data = max_temp, aes(x = date, y = air_temp), size = 2, colour = "#D2042D") +
+  geom_richtext(data = min_temp, aes(x = date - lubridate::days(24), y = air_temp - 3,
+                                     label = glue::glue("<span style='color:#0DA2FF; font-size:15pt'>**{temp}°C**</span><br><span style='color:grey25; font-size:9pt'>Lowest recorded temperature<br>{date}</span>",
+                                                        temp = air_temp, date = format(date, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = min_temp, aes(x = date - lubridate::days(12), y = air_temp - 1.5,
+  #                                   xend = date, yend = air_temp)) +
+  geom_point(data = min_temp, aes(x = date, y = air_temp), size = 2, colour = "#0DA2FF") +
+  scale_x_date(name = "", date_labels = "%d/%m/%Y") +
+  scale_y_continuous(name = "Air temperature (°C)", limits = c(0, 40), expand = c(0, 0)) +
+  coord_cartesian(clip = "off") +
+  # labs(caption = paste0("Data: ", all_names[1], " weather station collected at 30 min intervals")) +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"))
+
+```
+
+```{r rain_graph3, echo = FALSE}
+
+#Determine mean of each day from across both stations
+daily_sum <- site_data |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  group_by(date) |>
+  summarise(total_rain = sum(precip)) |>
+  mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
+
+max_rain <- daily_sum |>
+  filter(total_rain == max(total_rain))
+
+plot_rain_3 <- ggplot() +
+  geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
+  geom_richtext(data = max_rain, aes(x = date_time - lubridate::days(20), y = total_rain + 5,
+                                     label = glue::glue("<span style='color:#1434A4; font-size:15pt'>**{rain}mm**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded daily rainfall<br>{date}</span>",
+                                                        rain = total_rain, date = format(date_time, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
+  #                                   xend = date_time, yend = total_rain)) +
+  geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
+  scale_x_datetime(name = "", date_labels = "%d/%m/%Y") +
+  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
+  labs(caption = paste0("Data: ", all_names[3], " weather station collected at 30 min intervals")) +
+  coord_cartesian(clip = "off") +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"),
+        plot.caption = element_text(hjust = 0))
+
+```
+
+```{r combo_plot_3, echo = FALSE, fig.width=10, fig.height = 9}
+
+plot_temp_3 + plot_rain_3 + patchwork::plot_annotation(tag_levels = "A", tag_suffix = ")") + patchwork::plot_layout(ncol = 1)
+
+```
+
+-----
+
+\newpage
+
+## \large `r all_names[4]`
+
+```{r temp_graph4, echo = FALSE}
+
+#Site data
+site_data <- input_data |>
+  filter(site_name_title == all_names[4])
+
+#Determine mean of each day from across both stations
+daily_mean <- site_data |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  group_by(date) |>
+  summarise(daily_mean = mean(air_temp))
+
+max_temp <- site_data  |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  filter(air_temp == max(air_temp))
+
+min_temp <- site_data  |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  filter(air_temp == min(air_temp))
+
+temp_range <- site_data |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  group_by(date) |>
+  summarise(min_temp = min(air_temp),
+            max_temp = max(air_temp))
+
+plot_temp_4 <- ggplot() +
+  geom_ribbon(data = temp_range, aes(x = date, ymin = min_temp, ymax = max_temp), fill = "grey50", alpha = 0.5) +
+  # geom_line(data = site_data, aes(x = date, y = air_temp), colour = "grey75", alpha = 0.75) +
+  geom_line(data = daily_mean, aes(x = date, y = daily_mean), linewidth = 1, colour = "black") +
+  geom_text(data = slice(daily_mean, n()), aes(x = date + lubridate::days(2), y = daily_mean, label = "AVG"),
+            hjust = 0, family = "Montserrat600", fontface = "bold") +
+  geom_richtext(data = max_temp, aes(x = date + lubridate::days(10), y = air_temp + 5,
+                                     label = glue::glue("<span style='color:#D2042D; font-size:15pt'>**{temp}°C**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded temperature<br>{date}</span>",
+                                                        temp = air_temp, date = format(date_time, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = max_temp, aes(x = date - lubridate::days(10), y = air_temp + 2.5,
+  #                                   xend = date, yend = air_temp)) +
+  geom_point(data = max_temp, aes(x = date, y = air_temp), size = 2, colour = "#D2042D") +
+  geom_richtext(data = min_temp, aes(x = date - lubridate::days(20), y = air_temp - 3,
+                                     label = glue::glue("<span style='color:#0DA2FF; font-size:15pt'>**{temp}°C**</span><br><span style='color:grey25; font-size:9pt'>Lowest recorded temperature<br>{date}</span>",
+                                                        temp = air_temp, date = format(date, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = min_temp, aes(x = date - lubridate::days(12), y = air_temp - 1.5,
+  #                                   xend = date, yend = air_temp)) +
+  geom_point(data = min_temp, aes(x = date, y = air_temp), size = 2, colour = "#0DA2FF") +
+  scale_x_date(name = "", date_labels = "%d/%m/%Y") +
+  scale_y_continuous(name = "Air temperature (°C)", limits = c(-10, 40), expand = c(0, 0)) +
+  coord_cartesian(clip = "off") +
+  # labs(caption = paste0("Data: ", all_names[1], " weather station collected at 30 min intervals")) +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"))
+
+```
+
+```{r rain_graph4, echo = FALSE}
+
+#Determine mean of each day from across both stations
+daily_sum <- site_data |>
+  mutate(date = lubridate::as_date(date_time)) |>
+  group_by(date) |>
+  summarise(total_rain = sum(precip)) |>
+  mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
+
+max_rain <- daily_sum |>
+  filter(total_rain == max(total_rain))
+
+plot_rain_4 <- ggplot() +
+  geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
+  geom_richtext(data = max_rain, aes(x = date_time - lubridate::days(5), y = total_rain + 10,
+                                     label = glue::glue("<span style='color:#1434A4; font-size:15pt'>**{rain}mm**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded daily rainfall<br>{date}</span>",
+                                                        rain = total_rain, date = format(date_time, "%d/%m/%Y"))),
+                fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
+  # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
+  #                                   xend = date_time, yend = total_rain)) +
+  geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
+  scale_x_datetime(name = "", date_labels = "%d/%m/%Y") +
+  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
+  labs(caption = paste0("Data: ", all_names[4], " weather station collected at 30 min intervals")) +
+  coord_cartesian(clip = "off") +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
+        axis.line = element_line(colour = "grey10"),
+        plot.caption = element_text(hjust = 0))
+
+```
+
+```{r combo_plot_4, echo = FALSE, fig.width=10, fig.height = 9}
+
+plot_temp_4 + plot_rain_4 + patchwork::plot_annotation(tag_levels = "A", tag_suffix = ")") + patchwork::plot_layout(ncol = 1)
+```
+
+-----
+
+&nbsp;
