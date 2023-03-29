@@ -26,8 +26,8 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
 
   #FIXME: This can be both a multi-fetch or regular fetch...so I've just kept calling it fetch
   #First, check the dates. Convert everything into from/to (i.e. no issue if some of the cols are NULL)
-  date_range <- check_function_arg.date.fromtoat(from = from, to = to, at = at,
-                                                 data.type = "weather")
+  date_range <- hyenaR::check_function_arg.date.fromtoat(from = from, to = to, at = at,
+                                                         data.type = "weather")
 
   from       <- date_range$from
   to         <- date_range$to
@@ -60,7 +60,7 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
 
                                  })) -> output
 
-  check_function_output(input.tbl = input_full, output.tbl = output, join.by = c("from", "to")) %>%
+  hyenaR::check_function_output(input.tbl = input_full, output.tbl = output, join.by = c("from", "to")) %>%
     #Can't use output.IDcolumn because it only allows one col (and we need to know the name)
     dplyr::select(-"from", -"to")
 
