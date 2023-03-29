@@ -1,6 +1,7 @@
 #' Build weather report
 #'
 #' @inheritParams arguments
+#' @param output Character. Should report be pdf (default) or html.
 build_package_weather.report <- function(output = "pdf", args.vignette = list(), overwrite = FALSE, verbose = FALSE,
                                          devtools.ok = TRUE, require.data = TRUE) {
 

@@ -14,6 +14,8 @@ build_package_weather.report(
 )
 }
 \arguments{
+\item{output}{Character. Should report be pdf (default) or html.}
+
 \item{args.vignette}{A named list defining arguments to be passed to the vignette.}
 
 \item{overwrite}{A boolean indicating whether to overwrite existing compiled vignettes (`TRUE`) or not (`FALSE`, the default). If `FALSE`, the user will be prompted in case the vignette already exists.}

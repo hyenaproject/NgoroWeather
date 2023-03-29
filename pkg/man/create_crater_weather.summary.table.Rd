@@ -15,6 +15,9 @@ create_crater_weather.summary.table(
 )
 }
 \arguments{
+\item{resolution}{Character. Resolution at which weather data will be summarised.
+Is 'day' by default, but can take any argument accepted for 'by' in [seq.Date()].}
+
 \item{from}{The start date of a date range using the format "YYYY-MM-DD" or "YYYY/MM/DD". Combined with argument 'to' to create date range. Will default to earliest database observation date unless otherwise specified. Cannot be used with argument 'at'.}
 
 \item{to}{The end date of a date range using the format "YYYY-MM-DD" or "YYYY/MM/DD". Combined with argument 'from' to create date range. Will default to latest database observation date unless otherwise specified. Cannot be used with argument 'at'.}

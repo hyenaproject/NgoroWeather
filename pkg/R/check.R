@@ -65,11 +65,13 @@ check_function_arg.location.weather <- function(location){
 
 #' Check input variable exist in the weather dataset
 #'
+#' @inheritParams arguments
+#'
 #' @return A character vector of column names
 #' @export
 #'
 #' @examples
-#' check_function_arg.variable.weather(c("temp", "rain"))
+#' check_function_arg.variable.weather(c("air_temp", "precip"))
 check_function_arg.variable.weather <- function(variable, .fill = TRUE){
 
   possible_variable_df <- dplyr::tibble(possible_variable = c("air_temp", "precip", "precip_max_hourly",

@@ -18,10 +18,23 @@
 #' @param variable Character vector. Weather variables to return. By default include air temperature ('air_temp'),
 #' and precipitation ('precip'). Can also include maximum precipitation rate ('precip_max_hourly'),
 #' 'relative_humidity', 'atmospheric_pressure', 'battery_percent'.
+#' @param location Character. A possible weather station location. Can be
+#' "ngoitokitok", "acacia", "jackal_hill", and "lemala_rim". NOTE: Each location
+#' currently only has one station over time, but this could conceivably change in
+#' the future.
+#' @param station Character. A possible weather station name. Can be
+#' "jua", "upepo", "unveyu", and "mvua". NOTE: Each location
+#' currently only has one station over time, but this could conceivably change in
+#' the future.
+#' @param .fill Whether to automatically fill missing argument(s).
+#' @param resolution Character. Resolution at which weather data will be summarised.
+#' Is 'day' by default, but can take any argument accepted for 'by' in [seq.Date()].
+#' @param fn Function. Will be applied to data internally.
+#' @param suffix Character. When using a custom function, what should new columns be
+#' called? e.g. Use suffix 'mean' to create new column 'air_temp_mean'.
 #'
 #' @param .cache Logical for internal use (do not change). It indicates if the function should create and use cached data. When TRUE (default) function will use cached data if it exists and create cached data if one does not#exist. When FALSE function will always build table from scratch, even if cached data already exists. The cached output differs from the non cached one since it contains 2 alternative implementation for the ending date corresponding to the possible settings for the argument `censored.to.last.sighting`.
 #' @param .clean.old.csv A logical indicating whether existing `*.csv` files should be deleted from the `csv.output.folder` before new database files are downloaded. If TRUE, *all* existing `*.csv` files in `csv.output.folder` will be deleted, not just old versions of the database files. New database files will then be downloaded. If FALSE, no existing `*.csv` files in `csv.output.folder` will be deleted. New database files will then be downloaded and will *overwrite* old versions of the database files. This argument can be safely ignored if you are using R inside RStudio (interactive), you will be shown a menu where you can decide how to deal with existing '*.csv' files instead.
-#' @param .fill Whether to automatically fill missing argument(s).
 #' @param .git.ref The name of the commit/branch/tag on the GitHub repository from which to download the `.*csv` files. Keep the default (i.e. 'master') to download the latest `*.csv`. See the [GitHub API website](https://developer.github.com/v3/repos/contents/) for more details.
 #' @param .internal Logical. Is function being used internally (TRUE) or being called directly from the global environment (FALSE). Many functions that are called internally can skip check functions (e.g. `check_function_arg.date.fromtoat()`) because inputs will have already been checked in parent function.
 #' @param .parallel.min The minimum number of cases for parallel computation to be triggered (triggering parallel computing on small jobs costs more time!)

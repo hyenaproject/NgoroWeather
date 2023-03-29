@@ -4,6 +4,8 @@
 #' weather variables. For common statistics (mean, min, max, sd)
 #' applied to temperature and rainfall see wrapper functions like [hyenaR::fetch_weather_temp.mean()].
 #'
+#' @inheritParams arguments
+#'
 #' @return A tibble with summary statistic column(s).
 #' Summary statistics are calculated separately for each station/location.
 #' @export
@@ -70,6 +72,8 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
+#' @inheritParams arguments
+#'
 #' @return A tibble with mean temperature. Mean temperature is calculated separately for each station/location.
 #' @export
 #'
@@ -89,6 +93,8 @@ fetch_weather_temp.mean <- function(from = NULL, to = NULL, at = NULL,
 #' Fetch max temperature from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
+#'
+#' @inheritParams arguments
 #'
 #' @return A tibble with max temperature. Max temperature is calculated separately for each station/location.
 #' @export
@@ -110,6 +116,8 @@ fetch_weather_temp.max <- function(from = NULL, to = NULL, at = NULL,
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
+#' @inheritParams arguments
+#'
 #' @return A tibble with min temperature. Min temperature is calculated separately for each station/location.
 #' @export
 #'
@@ -129,6 +137,8 @@ fetch_weather_temp.min <- function(from = NULL, to = NULL, at = NULL,
 #' Fetch standard deviation of temperature from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
+#'
+#' @inheritParams arguments
 #'
 #' @return A tibble with standard deviation of temperature.
 #' Standard deviation is calculated separately for each station/location.
@@ -151,6 +161,8 @@ fetch_weather_temp.sd <- function(from = NULL, to = NULL, at = NULL,
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
+#' @inheritParams arguments
+#'
 #' @return A tibble with mean rainfall Mean rainfall is calculated separately for each station/location.
 #' @export
 #'
@@ -170,6 +182,8 @@ fetch_weather_rain.mean <- function(from = NULL, to = NULL, at = NULL,
 #' Fetch max rainfall from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
+#'
+#' @inheritParams arguments
 #'
 #' @return A tibble with max rainfall. Max rainfall is calculated separately for each station/location.
 #' @export
@@ -191,6 +205,8 @@ fetch_weather_rain.max <- function(from = NULL, to = NULL, at = NULL,
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 #'
+#' @inheritParams arguments
+#'
 #' @return A tibble with min rainfall. Min rainfall is calculated separately for each station/location.
 #' @export
 #'
@@ -210,6 +226,8 @@ fetch_weather_rain.min <- function(from = NULL, to = NULL, at = NULL,
 #' Fetch standard deviation of rainfall from a weather station during a given period
 #'
 #' NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
+#'
+#' @inheritParams arguments
 #'
 #' @return A tibble with standard deviation of rainfall.
 #' Standard deviation is calculated separately for each station/location.

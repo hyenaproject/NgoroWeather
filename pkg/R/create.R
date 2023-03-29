@@ -1,5 +1,7 @@
 #' Create a table of the meta-data attribute of a dataframe.
 #'
+#' @param input.tbl Weather data table to extract meta-data.
+#'
 #' @return Tibble of meta-data information.
 #' @export
 #'
@@ -18,6 +20,8 @@ create_tbl_metadata <- function(input.tbl){
 }
 
 #' Create a table of all weather data at 30 min intervals
+#'
+#' @inheritParams arguments
 #'
 #' @return Tibble of meta-data information.
 #' @export
@@ -124,6 +128,8 @@ create_crater_weather.summary.table <- function(resolution = "day",
 }
 
 #' Create a table of weather data in a given date range
+#'
+#' @inheritParams arguments
 #'
 #' @return Tibble of weather data
 #' @export

@@ -12,6 +12,17 @@ fetch_weather_rain.max(
   location = NULL
 )
 }
+\arguments{
+\item{from}{The start date of a date range using the format "YYYY-MM-DD" or "YYYY/MM/DD". Combined with argument 'to' to create date range. Will default to earliest database observation date unless otherwise specified. Cannot be used with argument 'at'.}
+
+\item{to}{The end date of a date range using the format "YYYY-MM-DD" or "YYYY/MM/DD". Combined with argument 'from' to create date range. Will default to latest database observation date unless otherwise specified. Cannot be used with argument 'at'.}
+
+\item{at}{A single date using the format "YYYY-MM-DD" or "YYYY/MM/DD". Cannot be used with arguments 'from' and 'to'.}
+
+\item{station}{A character vector. Vector of weather station names.}
+
+\item{location}{Character vector. Location of weather station where data should be used. Can be 'ngoitokitok' or 'acacia'.}
+}
 \value{
 A tibble with max rainfall. Max rainfall is calculated separately for each station/location.
 }

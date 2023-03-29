@@ -6,6 +6,9 @@
 \usage{
 create_tbl_metadata(input.tbl)
 }
+\arguments{
+\item{input.tbl}{Weather data table to extract meta-data.}
+}
 \value{
 Tibble of meta-data information.
 }

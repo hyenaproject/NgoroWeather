@@ -6,6 +6,9 @@
 \usage{
 create_weather_raw.table(input.folder)
 }
+\arguments{
+\item{input.folder}{File path. Folder containing all input files.}
+}
 \value{
 Tibble of meta-data information.
 }

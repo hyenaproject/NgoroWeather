@@ -14,11 +14,14 @@
 
 \item{verbose}{Logical. Should the function generate messages (default: TRUE)}
 
+\item{.fill}{Whether to automatically fill missing argument(s).}
+
+\item{resolution}{Character. Resolution at which weather data will be summarised.
+Is 'day' by default, but can take any argument accepted for 'by' in [seq.Date()].}
+
 \item{.cache}{Logical for internal use (do not change). It indicates if the function should create and use cached data. When TRUE (default) function will use cached data if it exists and create cached data if one does not#exist. When FALSE function will always build table from scratch, even if cached data already exists. The cached output differs from the non cached one since it contains 2 alternative implementation for the ending date corresponding to the possible settings for the argument `censored.to.last.sighting`.}
 
 \item{.clean.old.csv}{A logical indicating whether existing `*.csv` files should be deleted from the `csv.output.folder` before new database files are downloaded. If TRUE, *all* existing `*.csv` files in `csv.output.folder` will be deleted, not just old versions of the database files. New database files will then be downloaded. If FALSE, no existing `*.csv` files in `csv.output.folder` will be deleted. New database files will then be downloaded and will *overwrite* old versions of the database files. This argument can be safely ignored if you are using R inside RStudio (interactive), you will be shown a menu where you can decide how to deal with existing '*.csv' files instead.}
-
-\item{.fill}{Whether to automatically fill missing argument(s).}
 
 \item{.git.ref}{The name of the commit/branch/tag on the GitHub repository from which to download the `.*csv` files. Keep the default (i.e. 'master') to download the latest `*.csv`. See the [GitHub API website](https://developer.github.com/v3/repos/contents/) for more details.}
 

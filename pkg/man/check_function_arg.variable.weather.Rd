@@ -6,6 +6,11 @@
 \usage{
 check_function_arg.variable.weather(variable, .fill = TRUE)
 }
+\arguments{
+\item{variable}{A character vector. Name of columns to select from the dataframe.}
+
+\item{.fill}{Whether to automatically fill missing argument(s).}
+}
 \value{
 A character vector of column names
 }
@@ -13,5 +18,5 @@ A character vector of column names
 Check input variable exist in the weather dataset
 }
 \examples{
-check_function_arg.variable.weather(c("temp", "rain"))
+check_function_arg.variable.weather(c("air_temp", "precip"))
 }
