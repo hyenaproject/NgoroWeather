@@ -31,6 +31,8 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
                              variable = NULL, fn = NULL, suffix = NULL) {
 
   ## Extract from/to/at dates
+  ## FIXME: This fn behaves as a multifetch not a fetch! We need to decide how it behaves and is called.
+  ## Name would suggest that fn should summarise across ALL stations if given.
   date_range <- hyenaR::check_function_arg.date.fromtoat(from = from, to = to, at = at,
                                                          data.type = "weather")
 
