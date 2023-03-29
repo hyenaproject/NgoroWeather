@@ -53,8 +53,8 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
                                    create_crater_weather.table(from = ..1, to = ..2, variable = variable,
                                                                  station = station, location = location) %>%
                                      dplyr::group_by(.data$site_name) %>%
-                                     dplyr::summarise(across(.cols = dplyr::matches(variable_regex, perl = TRUE),
-                                                             .fns = fn, .names = paste0("{.col}_", suffix))) %>%
+                                     dplyr::summarise(dplyr::across(.cols = dplyr::matches(variable_regex, perl = TRUE),
+                                                             .fns = fn, na.rm = TRUE, .names = paste0("{.col}_", suffix))) %>%
                                      tidyr::pivot_wider(names_from = site_name,
                                                         values_from = -"site_name", names_glue = "{site_name}_{.value}")
 
