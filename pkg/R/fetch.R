@@ -54,7 +54,8 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
                                                                  station = station, location = location) %>%
                                      dplyr::group_by(.data$site_name) %>%
                                      dplyr::summarise(dplyr::across(.cols = dplyr::matches(variable_regex, perl = TRUE),
-                                                             .fns = fn, na.rm = TRUE, .names = paste0("{.col}_", suffix))) %>%
+                                                             .fns = fn,
+                                                             .names = paste0("{.col}_", suffix))) %>%
                                      tidyr::pivot_wider(names_from = site_name,
                                                         values_from = -"site_name", names_glue = "{site_name}_{.value}")
 
@@ -82,7 +83,7 @@ fetch_weather_temp.mean <- function(from = NULL, to = NULL, at = NULL,
                                     station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = mean, variable = "air_temp", suffix = "mean")
+                   fn =  \(x) mean(x, na.rm = TRUE), variable = "air_temp", suffix = "mean")
 
 }
 
@@ -102,7 +103,7 @@ fetch_weather_temp.max <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = max, variable = "air_temp", suffix = "max")
+                   fn =  \(x) max(x, na.rm = TRUE), variable = "air_temp", suffix = "max")
 
 }
 
@@ -122,7 +123,7 @@ fetch_weather_temp.min <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = min, variable = "air_temp", suffix = "min")
+                   fn =  \(x) min(x, na.rm = TRUE), variable = "air_temp", suffix = "min")
 
 }
 
@@ -143,7 +144,7 @@ fetch_weather_temp.sd <- function(from = NULL, to = NULL, at = NULL,
                                   station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = stats::sd, variable = "air_temp", suffix = "sd")
+                   fn =  \(x) stats::sd(x, na.rm = TRUE), variable = "air_temp", suffix = "sd")
 
 }
 
@@ -163,7 +164,7 @@ fetch_weather_rain.mean <- function(from = NULL, to = NULL, at = NULL,
                                     station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = mean, variable = "precip", suffix = "mean")
+                   fn =  \(x) mean(x, na.rm = TRUE), variable = "precip", suffix = "mean")
 
 }
 
@@ -183,7 +184,7 @@ fetch_weather_rain.max <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = max, variable = "precip", suffix = "max")
+                   fn = \(x) max(x, na.rm = TRUE), variable = "precip", suffix = "max")
 
 }
 
@@ -203,7 +204,7 @@ fetch_weather_rain.min <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = min, variable = "precip", suffix = "min")
+                   fn = \(x) min(x, na.rm = TRUE), variable = "precip", suffix = "min")
 
 }
 
@@ -224,6 +225,6 @@ fetch_weather_rain.sd <- function(from = NULL, to = NULL, at = NULL,
                                   station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = stats::sd, variable = "precip", suffix = "sd")
+                   fn = \(x) stats::sd(x, na.rm = TRUE), variable = "precip", suffix = "sd")
 
 }
