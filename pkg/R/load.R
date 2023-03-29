@@ -1,3 +1,137 @@
+load_package_database.weather <- function(input.folder,
+                                          overwrite.db = c("prompt", "yes", "no"),
+                                          verbose = TRUE){
+
+  overwrite.db <- match.arg(overwrite.db) ##  'prompt' is default as it is the first argument
+
+  ### If there is already a .database object...
+  if (exists(".database")) {
+
+    ### If it's a stand-alone weather database...
+    if (attr(.database, "datatype") == "weather") {
+
+      # Check if the session is being run interactively
+      # or the user hasn't provided a default behaviour for dealing with clashes...
+      if (interactive() & overwrite.db == "prompt") {
+
+        # Allow the user to choose whether they:
+        # a) overwrite the existing data
+        # b) exit (i.e. use the existing data)
+        overwrite.db <- menu(
+          choices = c("Overwrite existing data", "Exit"),
+          title = "Some weather data has already been loaded. What do you want to do?"
+        )
+
+        ## Convert menu outcome to match 'yes' and 'no' option from the 'overwrite.db' argument
+        overwrite.db <- dplyr::case_when(
+          overwrite.db == 1 ~ "yes",
+          overwrite.db == 2 ~ "no"
+        )
+      } else if (!interactive() & overwrite.db == "prompt") {
+        stop("User prompt is not possible in non-interactive mode.
+           Please provide a default behaviour to deal with clashes. Use the argument 'overwrite.db'.")
+      }
+
+      # If they choose to overwrite the file, delete the original and continue.
+      # (Not ideal because the delete takes time, actual overwrite would be better but SQL problems)
+      if (overwrite.db == "yes") {
+
+        if (verbose) {
+          message("Data already exists. Loading new data...")
+        }
+
+        weather_data <- create_weather_raw.table(input.folder = input.folder) |>
+        ## Coerce this to be in hyenaR format
+          dplyr::select(table_name = "name",
+                        "data")
+
+        ### Update the .database object to have a new data and folder path
+        assign(x = "database", value = weather_data, envir = .database)
+        assign(x = "db.path", value = input.folder, envir = .database)
+
+        # Otherwise, exit without doing anything...
+      } else {
+        if (verbose) {
+          message("Exit without loading data...")
+        }
+        return(invisible(NULL))
+      }
+
+    } else if (attr(.database, "datatype") %in% c("full", "dummy", "sim")) {
+
+      ## Check to see if it already has a weather table
+      if ("weather" %in% .database$database$table_name) {
+
+        ## In which case, we do the same process as above (i.e. overwrite or exit)
+        # Check if the session is being run interactively
+        # or the user hasn't provided a default behaviour for dealing with clashes...
+        if (interactive() & overwrite.db == "prompt") {
+
+          # Allow the user to choose whether they:
+          # a) overwrite the existing data
+          # b) exit (i.e. use the existing data)
+          overwrite.db <- menu(
+            choices = c("Overwrite existing data", "Exit"),
+            title = "Weather data already loaded. What do you want to do?"
+          )
+
+          ## Convert menu outcome to match 'yes' and 'no' option from the 'overwrite.db' argument
+          overwrite.db <- dplyr::case_when(
+            overwrite.db == 1 ~ "yes",
+            overwrite.db == 2 ~ "no"
+          )
+        } else if (!interactive() & overwrite.db == "prompt") {
+          stop("User prompt is not possible in non-interactive mode.
+           Please provide a default behaviour to deal with clashes. Use the argument 'overwrite.db'.")
+        }
+
+        # If they choose to overwrite the file, delete the original and continue.
+        # (Not ideal because the delete takes time, actual overwrite would be better but SQL problems)
+        if (overwrite.db == "yes") {
+
+          if (verbose) {
+            message("Data already exists. Loading new data...")
+          }
+
+          weather_data <- create_weather_raw.table(input.folder = input.folder) |>
+            ## Coerce this to be in hyenaR format
+            dplyr::select(table_name = "name",
+                          "data")
+
+          ### Update the weather and weather_metadata parts of the db
+          .database$database$data[[which(.database$database$table_name == "weather")]] <- weather_data$data[[1]]
+          .database$database$data[[which(.database$database$table_name == "weather_metadata")]] <- weather_data$data[[2]]
+
+          # Otherwise, exit without doing anything...
+        } else {
+          if (verbose) {
+            message("Exit without loading data...")
+          }
+          return(invisible(NULL))
+        }
+
+      }
+
+    }
+
+  } else {
+
+    .database <<- new.env()
+    attr(.database, "name")     <- "environment storing the database and its path"
+    attr(.database, "datatype") <- "weather"
+
+    weather_data <- create_weather_raw.table(input.folder = input.folder) |>
+      ## Coerce this to be in hyenaR format
+      dplyr::select(table_name = "name",
+                    "data")
+
+    assign(x = "database", value = weather_data, envir = .database)
+    assign(x = "db.path", value = input.folder, envir = .database)
+
+  }
+
+}
+
 #' Load all sheets from an excel file (.xls or .xslx).
 #'
 #' @inheritParams arguments
