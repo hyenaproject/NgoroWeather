@@ -7,6 +7,7 @@
 #' weather and hyena information to be used simultaneously.
 #'
 #' @inheritParams arguments
+#' @export
 load_package_database.weather <- function(input.folder,
                                           overwrite.db = c("prompt", "yes", "no"),
                                           verbose = TRUE){
@@ -203,7 +204,7 @@ load_data_excel <- function(excel.path, ...) {
 #'
 #' @examples
 #' #Example data collected from IZW is stored with the package for example
-#' load_data_weatherstation.file(system.file("extdata/weather_Mlima",
+#' load_data_weatherstation.file(system.file("extdata/working_weather/weather_Mlima",
 #'                                           "weather_data_test1.xlsx",
 #'                                           package = "NgoroWeather"))
 load_data_weatherstation.file <- function(excel.path, tz = "Africa/Dar_es_Salaam", verbose = TRUE) {

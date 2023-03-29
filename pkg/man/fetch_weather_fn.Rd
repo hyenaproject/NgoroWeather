@@ -42,15 +42,19 @@ weather variables. For common statistics (mean, min, max, sd)
 applied to temperature and rainfall see wrapper functions like [hyenaR::fetch_weather_temp.mean()].
 }
 \examples{
+#Load data
+load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"),
+overwrite.db = "yes")
+
 #Summary stat from station jua in October 2021
 data.frame(from = "2021-10-01", to = "2021-10-31",
            station = "jua") |>
            dplyr::mutate(fetch_weather_fn(from = from, to = to, station = station,
-                         variable = c("temp", "rain"), fn = mean, suffix = "mean"))
+                         variable = c("air_temp", "precip"), fn = mean, suffix = "mean"))
 
 #Apply a custom function to find difference between temperature min/max
 data.frame(from = "2021-10-01", to = "2021-10-31",
            station = "jua") |>
            dplyr::mutate(fetch_weather_fn(from = from, to = to, station = station,
-                         variable = "temp", fn = ~{max(.) - min(.)}, suffix = "diff"))
+                         variable = "air_temp", fn = ~{max(.) - min(.)}, suffix = "diff"))
 }

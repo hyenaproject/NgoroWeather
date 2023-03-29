@@ -11,17 +11,21 @@
 #' @export
 #'
 #' @examples
+#' #Load data
+#' load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"),
+#' overwrite.db = "yes")
+#'
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_fn(from = from, to = to, station = station,
-#'                          variable = c("temp", "rain"), fn = mean, suffix = "mean"))
+#'                          variable = c("air_temp", "precip"), fn = mean, suffix = "mean"))
 #'
 #' #Apply a custom function to find difference between temperature min/max
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
 #'            dplyr::mutate(fetch_weather_fn(from = from, to = to, station = station,
-#'                          variable = "temp", fn = ~{max(.) - min(.)}, suffix = "diff"))
+#'                          variable = "air_temp", fn = ~{max(.) - min(.)}, suffix = "diff"))
 fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
                              station = NULL, location = NULL,
                              variable = NULL, fn = NULL, suffix = NULL) {
@@ -58,7 +62,8 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
                                                                   .fns = fn,
                                                                   .names = paste0("{.col}_", suffix))) |>
                                    tidyr::pivot_wider(names_from = site_name,
-                                                      values_from = -"site_name", names_glue = "{site_name}_{.value}")
+                                                      values_from = -"site_name", names_glue = "{site_name}_{.value}") |>
+                                   dplyr::mutate(from = ..1, to = ..2)
 
                                })) -> output
 

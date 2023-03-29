@@ -135,10 +135,10 @@ create_crater_weather.summary.table <- function(resolution = "day",
 #' @export
 #'
 #' @examples
-#' #Get temp data from jua station
-#' create_crater_weather.table(system.file("extdata/working_weather", package = "NgoroWeather"),
-#'                               variable = "temp", station = "jua")
+#' load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"), overwrite.db = "yes")
 #'
+#' #Get temp data from jua station
+#' create_crater_weather.table(variable = "air_temp", station = "jua")
 create_crater_weather.table <- function(from = NULL, to = NULL, at = NULL,
                                         variable = c("air_temp", "precip"),
                                         station = NULL,
@@ -168,12 +168,15 @@ create_crater_weather.table <- function(from = NULL, to = NULL, at = NULL,
     dplyr::mutate(date_time = lubridate::ymd_hms(paste(.data$date, .data$time, sep = " "),
                                                 tz = "Africa/Dar_es_Salaam"))
 
+  focal_station_activity <- weather_station_activity |>
+    dplyr::filter(.data$station_name %in% !!station & .data$site_name %in% !!location)
+
   ## Data are already subset to only include the active period of each station (e.g. exclude periods of repair)
   ## Therefore, if from/to/at not provided just use Inf!
   date_range <- hyenaR::check_function_arg.date.fromtoat(from, to, at,
                                                          .fill = TRUE,
-                                                         min.date = min(weather_station_activity$start_date),
-                                                         max.date = max(weather_station_activity$end_date),
+                                                         min.date = min(focal_station_activity$start_date),
+                                                         max.date = max(focal_station_activity$end_date),
                                                          arg.max.length = 1L, data.type = "weather")
 
   ## Convert to POSIXct so we can compare to date-time data
