@@ -31,6 +31,10 @@ Standard deviation is calculated separately for each station/location.
 NOTE: To apply custom functions please see [hyenaR::fetch_weather_fn()].
 }
 \examples{
+#Load data
+load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"),
+overwrite.db = "yes")
+
 #Summary stat from station jua in October 2021
 data.frame(from = "2021-10-01", to = "2021-10-31",
            station = "jua") |>

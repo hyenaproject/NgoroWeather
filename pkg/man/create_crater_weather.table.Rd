@@ -33,7 +33,8 @@ Tibble of weather data
 Create a table of weather data in a given date range
 }
 \examples{
-load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"), overwrite.db = "yes")
+load_package_database.weather(system.file("extdata/working_weather",
+package = "NgoroWeather"), overwrite.db = "yes")
 
 #Get temp data from jua station
 create_crater_weather.table(variable = "air_temp", station = "jua")

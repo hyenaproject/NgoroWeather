@@ -22,6 +22,6 @@ If no hyenaR database is present, will create a standalone .database object
 for weather. This will function in a similar way to hyenaR processes.
 }
 \details{
-If a hyenaR database is present, will append weather data to the database allowing
-weather and hyena information to be used simultaneously.
+If a hyenaR database is present, will append weather data to the database
+allowing weather and hyena information to be used simultaneously.
 }

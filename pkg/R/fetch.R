@@ -83,6 +83,10 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
 #' @export
 #'
 #' @examples
+#' #Load data
+#' load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"),
+#' overwrite.db = "yes")
+#'
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
@@ -105,6 +109,10 @@ fetch_weather_temp.mean <- function(from = NULL, to = NULL, at = NULL,
 #' @export
 #'
 #' @examples
+#' #Load data
+#' load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"),
+#' overwrite.db = "yes")
+#'
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
@@ -127,6 +135,10 @@ fetch_weather_temp.max <- function(from = NULL, to = NULL, at = NULL,
 #' @export
 #'
 #' @examples
+#' #Load data
+#' load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"),
+#' overwrite.db = "yes")
+#'
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
@@ -150,6 +162,10 @@ fetch_weather_temp.min <- function(from = NULL, to = NULL, at = NULL,
 #' @export
 #'
 #' @examples
+#' #Load data
+#' load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"),
+#' overwrite.db = "yes")
+#'
 #' #Determine mean of temperature and rainfall from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
@@ -172,6 +188,10 @@ fetch_weather_temp.sd <- function(from = NULL, to = NULL, at = NULL,
 #' @export
 #'
 #' @examples
+#' #Load data
+#' load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"),
+#' overwrite.db = "yes")
+#'
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
@@ -194,6 +214,10 @@ fetch_weather_rain.mean <- function(from = NULL, to = NULL, at = NULL,
 #' @export
 #'
 #' @examples
+#' #Load data
+#' load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"),
+#' overwrite.db = "yes")
+#'
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
@@ -216,6 +240,10 @@ fetch_weather_rain.max <- function(from = NULL, to = NULL, at = NULL,
 #' @export
 #'
 #' @examples
+#' #Load data
+#' load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"),
+#' overwrite.db = "yes")
+#'
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
@@ -239,6 +267,10 @@ fetch_weather_rain.min <- function(from = NULL, to = NULL, at = NULL,
 #' @export
 #'
 #' @examples
+#' #Load data
+#' load_package_database.weather(system.file("extdata/working_weather", package = "NgoroWeather"),
+#' overwrite.db = "yes")
+#'
 #' #Summary stat from station jua in October 2021
 #' data.frame(from = "2021-10-01", to = "2021-10-31",
 #'            station = "jua") |>
