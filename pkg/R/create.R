@@ -64,17 +64,24 @@ create_weather_raw.table <- function(input.folder){
 
 }
 
-create_weather_summary.table <- function(resolution = "day"){
+create_crater_weather.summary.table <- function(resolution = "day",
+                                                from = NULL, to = NULL, at = NULL,
+                                                variable = c("air_temp", "precip"),
+                                                station = NULL,
+                                                location = NULL){
 
-  hyenaR::check_database_is.loaded()
+  thirtymin_data <- create_crater_weather.table(from = from, to = to, at = at,
+                                                ## We read in all variables and calculate summary stats then filter later...
+                                                ## Otherwise we need lots of if/else to check which summary fn we can do
+                                                variable = NULL,
+                                                station = station, location = location)
 
-  raw_data <- hyenaR::extract_database_table("weather")
+  variable <- check_function_arg.variable.weather(variable)
 
   ## Take the weather data only...
-  summary_data <- raw_data |>
+  summary_data <- thirtymin_data |>
     ## Work out which group each record will fall into (i.e. which day, hour, week etc)
-    dplyr::mutate(datetime = lubridate::floor_date(lubridate::ymd_hms(paste(date, time, sep = " ")),
-                                                   resolution)) |>
+    dplyr::mutate(datetime = lubridate::floor_date(.data$date_time, resolution)) |>
     ## Now, for each station/time step, create summary stats
     dplyr::group_by(.data$site_name, .data$datetime) |>
     dplyr::summarise(station_name = dplyr::first(.data$station_name),
@@ -96,9 +103,8 @@ create_weather_summary.table <- function(resolution = "day"){
                   time = format(.data$datetime, "%H:%M")) |>
     dplyr::select("site_name", "station_name", "date", "time",
                   "latitude":"period",
-                  "air_temp_mean":"air_temp_min",
-                  "precip_mean":"precip_max_hourly_max",
-                  "relative_humidity_mean":"battery_percent_min")
+                  ## Need perl = TRUE to accept lookahead regex
+                  dplyr::matches(variable, perl = TRUE))
 
   ## If there's only one time (i.e. we grouped by date or higher)
   ## Then just remove this col.
@@ -120,14 +126,19 @@ create_weather_summary.table <- function(resolution = "day"){
 #'
 #' @examples
 #' #Get temp data from jua station
-#' create_weather_starting.table(system.file("extdata/working_weather", package = "NgoroWeather"),
+#' create_crater_weather.table(system.file("extdata/working_weather", package = "NgoroWeather"),
 #'                               variable = "temp", station = "jua")
 #'
-create_weather_starting.table <- function(from = NULL, to = NULL, at = NULL,
-                                          resolution = "30 minute",
-                                          variable = c("temp", "rain", "rainmax", "humidity", "pressure", "battery"),
-                                          station = NULL,
-                                          location = NULL){
+create_crater_weather.table <- function(from = NULL, to = NULL, at = NULL,
+                                        variable = c("air_temp", "precip"),
+                                        station = NULL,
+                                        location = NULL){
+
+  if (!exists(".database") | (exists(".database") & !"weather" %in% .database$database$table_name)) {
+
+    stop("Use `load_package_database.weather()` to load weather data")
+
+  }
 
   #User must provide one of either station or location, not both
   if ((!is.null(station) & !is.null(location))) {
@@ -137,22 +148,14 @@ create_weather_starting.table <- function(from = NULL, to = NULL, at = NULL,
   }
 
   #Check station, location, and variable names
-  station   <- check_function_arg.station(station)
-  location  <- check_function_arg.location.weather(location)
+  station  <- check_function_arg.station(station)
+  location <- check_function_arg.location.weather(location)
   variable <- check_function_arg.variable.weather(variable)
 
   ## Create summary table
-  summary_weather <- create_weather_summary.table(resolution = resolution)
-
-  ## If time is missing, add it back as 00:00. This could be removed if we were creating summary
-  ## data at scale >= day
-  if (!"time" %in% colnames(summary_weather)) {
-    summary_weather$time <- "00:00"
-  }
-
-  summary_weather <- summary_weather |>
+  weather_data <- hyenaR::extract_database_table("weather") |>
     ## Combine to a date time file (we separate them for saving as .csv for output)
-    dplyr::mutate(date_time = lubridate::ymd_hm(paste(.data$date, .data$time, sep = " "),
+    dplyr::mutate(date_time = lubridate::ymd_hms(paste(.data$date, .data$time, sep = " "),
                                                 tz = "Africa/Dar_es_Salaam"))
 
   ## Data are already subset to only include the active period of each station (e.g. exclude periods of repair)
@@ -167,9 +170,12 @@ create_weather_starting.table <- function(from = NULL, to = NULL, at = NULL,
   from       <- as.POSIXct(date_range$from)
   to         <- as.POSIXct(date_range$to)
 
-  output <- summary_weather |>
+  output <- weather_data |>
     dplyr::filter(.data$site_name %in% !!location & .data$station_name %in% !!station & .data$date_time >= from & .data$date_time <= to) |>
-    dplyr::select("site_name", "station_name", "date_time", "latitude", "longitude", matches(variable))
+    dplyr::select("site_name", "station_name", "date_time", "latitude", "longitude",
+                  ## Need perl = TRUE to accept lookahead regex
+                  dplyr::matches(variable, perl = TRUE),
+                  "observation_period")
 
   output
 
