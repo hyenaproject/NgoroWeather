@@ -20,26 +20,20 @@ test_that("Can create raw data table...", {
 
 test_that("Can create summary data table...", {
 
-  summary_data_day <- create_weather_summary.table(system.file("extdata/working_weather",
-                                                           package = "NgoroWeather"), resolution = "day")
+  summary_data_day <- create_crater_weather.summary.table(resolution = "day")
 
-  summary_data_week <- create_weather_summary.table(system.file("extdata/working_weather",
-                                                               package = "NgoroWeather"), resolution = "week")
+  summary_data_week <- create_crater_weather.summary.table(resolution = "week")
 
-  summary_data_2h <- create_weather_summary.table(system.file("extdata/working_weather",
-                                                                package = "NgoroWeather"), resolution = "2 hour")
+  summary_data_2h <- create_crater_weather.summary.table(resolution = "2 hour")
 
   ## Should return a data frame
   expect_true(inherits(summary_data_day, "data.frame"))
   expect_true(inherits(summary_data_week, "data.frame"))
   expect_true(inherits(summary_data_2h, "data.frame"))
 
-  ## Should have all summary cols
+  ## Should have summary cols but only temp and precip by default
   expected_cols <- c("air_temp_mean", "air_temp_max", "air_temp_min", "precip_mean",
-                     "precip_max", "precip_total", "precip_max_hourly_mean", "precip_max_hourly_max",
-                     "relative_humidity_mean", "relative_humidity_max", "relative_humidity_min",
-                     "atmospheric_pressure_mean", "atmospheric_pressure_max", "atmospheric_pressure_min",
-                     "battery_percent_mean", "battery_percent_max", "battery_percent_min")
+                     "precip_max", "precip_total")
   expect_true(all(expected_cols %in% colnames(summary_data_day)))
   expect_true(all(expected_cols %in% colnames(summary_data_week)))
   expect_true(all(expected_cols %in% colnames(summary_data_2h)))
