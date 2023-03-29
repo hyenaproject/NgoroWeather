@@ -1,6 +1,6 @@
 Package: NgoroWeather
 Type: Package
-Title: Work with weather data from Ngorongoro Hyena Project.
+Title: Work with weather data from Ngorongoro Hyena Project
 Version: 0.1.0
 Authors@R: 
     c(person(given = "Liam",
@@ -33,4 +33,10 @@ Imports:
     withr,
     gt,
     showtext,
-    kableExtra
+    kableExtra,
+    crayon,
+    lubridate,
+    readxl,
+    rmarkdown,
+    sf
+RoxygenNote: 7.2.3
