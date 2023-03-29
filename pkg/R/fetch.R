@@ -24,20 +24,19 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
                              station = NULL, location = NULL,
                              variable = NULL, fn = NULL, suffix = NULL) {
 
-  #FIXME: This can be both a multi-fetch or regular fetch...so I've just kept calling it fetch
-  #First, check the dates. Convert everything into from/to (i.e. no issue if some of the cols are NULL)
+  ## Extract from/to/at dates
   date_range <- hyenaR::check_function_arg.date.fromtoat(from = from, to = to, at = at,
                                                          data.type = "weather")
 
   from       <- date_range$from
   to         <- date_range$to
 
-  #Identify the unique date combinations we need to find
+  #Identify the unique from/to combinations over which we need to extract data.
   input_full <- dplyr::tibble(from = from, to = to)
   input <- unique(input_full)
 
-  #Check variables are correct
-  variable_realcol <- check_function_arg.variable.weather(variable)
+  #Convert variable arg to use regex internally
+  variable_regex <- check_function_arg.variable.weather(variable)
 
   #Requires a suffix to make it clear that we applied some summary stat
   #TODO: Create a check function for this
@@ -51,10 +50,11 @@ fetch_weather_fn <- function(from = NULL, to = NULL, at = NULL,
     dplyr::mutate(purrr::pmap_df(.l = .,
                                  .f = ~{
 
-                                   create_weather_starting.table(from = ..1, to = ..2, variable = variable,
+                                   create_crater_weather.table(from = ..1, to = ..2, variable = variable,
                                                                  station = station, location = location) %>%
                                      dplyr::group_by(.data$site_name) %>%
-                                     dplyr::summarise(across(.cols = {{variable_realcol}}, .fns = fn, .names = paste0("{.col}_", suffix))) %>%
+                                     dplyr::summarise(across(.cols = dplyr::matches(variable_regex, perl = TRUE),
+                                                             .fns = fn, .names = paste0("{.col}_", suffix))) %>%
                                      tidyr::pivot_wider(names_from = site_name,
                                                         values_from = -"site_name", names_glue = "{site_name}_{.value}")
 
@@ -82,7 +82,7 @@ fetch_weather_temp.mean <- function(from = NULL, to = NULL, at = NULL,
                                     station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = mean, variable = "temp", suffix = "mean")
+                   fn = mean, variable = "air_temp", suffix = "mean")
 
 }
 
@@ -102,7 +102,7 @@ fetch_weather_temp.max <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = max, variable = "temp", suffix = "max")
+                   fn = max, variable = "air_temp", suffix = "max")
 
 }
 
@@ -122,7 +122,7 @@ fetch_weather_temp.min <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = min, variable = "temp", suffix = "min")
+                   fn = min, variable = "air_temp", suffix = "min")
 
 }
 
@@ -143,7 +143,7 @@ fetch_weather_temp.sd <- function(from = NULL, to = NULL, at = NULL,
                                   station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = stats::sd, variable = "temp", suffix = "sd")
+                   fn = stats::sd, variable = "air_temp", suffix = "sd")
 
 }
 
@@ -163,7 +163,7 @@ fetch_weather_rain.mean <- function(from = NULL, to = NULL, at = NULL,
                                     station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = mean, variable = "rain", suffix = "mean")
+                   fn = mean, variable = "precip", suffix = "mean")
 
 }
 
@@ -183,7 +183,7 @@ fetch_weather_rain.max <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = max, variable = "rain", suffix = "max")
+                   fn = max, variable = "precip", suffix = "max")
 
 }
 
@@ -203,7 +203,7 @@ fetch_weather_rain.min <- function(from = NULL, to = NULL, at = NULL,
                                    station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = min, variable = "rain", suffix = "min")
+                   fn = min, variable = "precip", suffix = "min")
 
 }
 
@@ -224,6 +224,6 @@ fetch_weather_rain.sd <- function(from = NULL, to = NULL, at = NULL,
                                   station = NULL, location = NULL) {
 
   fetch_weather_fn(from = from, to = to, at = at, station = station, location = location,
-                   fn = stats::sd, variable = "rain", suffix = "sd")
+                   fn = stats::sd, variable = "precip", suffix = "sd")
 
 }
