@@ -110,6 +110,16 @@ load_package_database.weather <- function(input.folder,
           return(invisible(NULL))
         }
 
+      } else {
+
+        weather_data <- create_weather_raw.table(input.folder = input.folder) |>
+          ## Coerce this to be in hyenaR format
+          dplyr::select(table_name = "name",
+                        "data")
+
+        ### Append weather data to this .database
+        .database$database <- dplyr::bind_rows(.database$database, weather_data)
+
       }
 
     }
