@@ -72,8 +72,11 @@ check_function_arg.location.weather <- function(location){
 #' check_function_arg.variable.weather(c("temp", "rain"))
 check_function_arg.variable.weather <- function(variable, .fill = TRUE){
 
-  possible_variable_df <- data.frame(possible_variable = c("temp", "rain", "rainmax", "humidity", "pressure", "battery"),
-                                     colname = c("air_temp", "precip$", "precip_max_hourly", "relative_humidity", "atmospheric_pressure", "battery_percent"))
+  possible_variable_df <- data.frame(possible_variable = c("air_temp", "precip", "precip_max_hourly",
+                                                           "relative_humidity", "atmospheric_pressure",
+                                                           "battery_percent"),
+                                     ## Need to convert precip to regex internally to distinguish between two precip metrics
+                                     colname = c("air_temp", "^precip(?!_max_)", "precip_max_hourly", "relative_humidity", "atmospheric_pressure", "battery_percent"))
 
   #If no variable provided...
   if (is.null(variable)) {
