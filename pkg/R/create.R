@@ -49,7 +49,8 @@ create_weather_raw.table <- function(input.folder){
   weather_data_active <- purrr::map(.x = weather_data, .f = function(station){
 
     station |>
-      dplyr::left_join(weather_station_activity, by = c("station_name", "site_name"), multiple = "all") |>
+      ## Join relationship is many-to-many (multiple records per station/site and multiple activity periods)
+      dplyr::left_join(weather_station_activity, by = c("station_name", "site_name"), relationship = "many-to-many") |>
       dplyr::filter(lubridate::as_date(date_time) >= start_date & lubridate::as_date(date_time) <= end_date) |>
       dplyr::select(-start_date, -end_date, -comment)
 
