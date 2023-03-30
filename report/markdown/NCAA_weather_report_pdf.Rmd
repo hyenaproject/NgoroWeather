@@ -1,5 +1,5 @@
 ---
-title: \Huge Ngorongoro Crater Weather Report - Graphical representation of the trends in temperature and rainfall in the Ngorongoro Crater, Tanzania
+title: \Huge Ngorongoro Crater Weather Report. Graphical representation of the trends in temperature and rainfall in the Ngorongoro Crater, Tanzania
 author: "Ngorongoro Hyena Project"
 date: "`r format(Sys.Date(), '%d/%m/%Y')`"
 output:
