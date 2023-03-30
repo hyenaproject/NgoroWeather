@@ -37,5 +37,7 @@ Imports:
     lubridate,
     readxl,
     rmarkdown,
-    sf
+    sf,
+    ggtext,
+    stringr
 RoxygenNote: 7.2.3
