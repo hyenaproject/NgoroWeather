@@ -1,6 +1,10 @@
 on:
   push:
     branches: [main, master]
+    paths:
+      - data/raw
+      - repor/markdown
+
 
 name: build_report
 
@@ -44,7 +48,7 @@ jobs:
         run: |
           install.packages("tinytex")
           tinytex::install_tinytex()
-          rmarkdown::render(input = "./report/markdown/NCAA_weather_report_pdf.Rmd", output_dir = "./report", output_file = "NCAA_weather_report.pdf")
+          rmarkdown::render(input = "./report/markdown/NCAA_weather_report_pdf.Rmd", output_dir = "./report", output_file = "NCAA_weather_report_Hyena_Project.pdf")
         shell: Rscript {0}
 
       - name: check for changes
