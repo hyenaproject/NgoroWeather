@@ -3,7 +3,7 @@ on:
     branches: [main, master]
     paths:
       - data/raw/**/*.xlsx
-      - repor/markdown/**
+      - report/markdown/**
 
 
 name: build_report
