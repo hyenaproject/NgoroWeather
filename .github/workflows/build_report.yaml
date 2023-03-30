@@ -60,7 +60,7 @@ jobs:
           current_csv <- list.files("./data/summary", pattern = ".csv", full.names = TRUE)
           file.remove(current_csv)
           ## Save new file
-          write.csv(output, file = paste0("./data/summary/weatherdata_summary_", Sys.Date(), ".csv"))
+          write.csv(output, file = paste0("./data/summary/weatherdata_summary_", Sys.Date(), ".csv"), row.names = FALSE)
         shell: Rscript {0}
 
       - name: check for changes

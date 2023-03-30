@@ -2,21 +2,35 @@
 File meta-data
 ####################################################
 File: Ngorongoro Hyena Project weather data raw
-Date: 2021/09/30 - 2022/11/10
+
+Contains four sub-folders for each weather station location (Acacia, Jackal Hill, Lemala, Ngoiktokitok). Each sub-folder contains a set of .xlsx files, each file is the raw data downloaded from Meter Group solar powered data logger on site.
+
+Each file contains at least 1 sheet of processed weather data collected at 30 minute intervals. Multiple sheets may exist if the station was inactive in between periods (e.g. due to damage and repair). Files also contain meta-data information.
 
 
 ####################################################
-Column description
+Weather data: Column description
 ####################################################
-station_name: Name of solar powered logger device used to store data. Currently, each station is only found at one site but this could change in future.
-site_name: Location at which station is installed.
-date_time: Date-time of data collection in East Africa Time (UTC+3).
-latitude: Latitude in decimal degrees.
-longitude: Longitude in decimal degrees.
-period: Time period of continous data collection. Some sites will experience breaks in data collection due to mantainance or damage.
-air_temp: Air temperature in centigrade.
-precip: Total precipitation in mm.
-precip_max_hourly: Maximum rate of precipitation (mm/hour). Maximum precipitation can be used to account for uncertainty in tipping bucket rain gauges.
-relative_humidity: Relative humidity.
-atmospheric_pressure: Atmospheric pressure in kPa
-battery_percentage: Battery percentage of the station data logger. Data collected when station has low battery power may be unreliable.
+The processed weather data is not in a tidy format (i.e. each row is not a single observation); however, we will describe the general purpose of each column. *NOTE:* Port number of sensors may differ between stations and over-time due to port issues.
+
+Timestamp: Date-time of weather observation in East Africa Time (UTC+3).
+ATMOS 14/Air temperature: Air temperature (C) measured by ATMOS 14 sensor.
+ATMOS 14/RH Relative Humidity: Relative humidity measured by ATMOS 14 sensor.
+ATMOS 14/kPa Atmospheric Pressure: Atmospheric pressure measured by ATMOS 14 sensor.
+ECRN-100/Precipitation: Precipitation (mm) in 30 minute period measured by ECRN-100 tipping bucket rain gauge.
+ECRN-100/ mm/h Max Precip Rate: Maximum precipitation rate (mm/h) within a 30 minute period measured by ECRN-100 tipping bucket rain gauge.
+Battery/% Battery percent: Charge of batteries in solar powered data logger.
+Battery/mV Battery voltage: Voltage of batteries in solar powered data logger.
+Barometer/kPa Reference Pressure: Atmospheric pressure measured by sensors inside the solar powered data logger.
+Barometer/C Logger temperature: Temperature measured by sensors inside the solar powered data logger.
+
+####################################################
+Meta data: Description
+####################################################
+Meta-data sheet contains number of important pieces of information, which are explained below. This list is not exhaustive. See full manual of data logger for more details (http://publications.metergroup.com/Manuals/20789_ZL6_Manual_Web.pdf).
+
+Firmware Version: Firmware installed on ZL6 Data Logger. Has been known to affect performance (e.g. which ports can work), so may be useful for trouble-shooting.
+Latitude/Longitude/Altitude: Detailed locational information of data logger.
+Cellular: Information not relevant as data are downloaded manually, not over cellular network. Any errors here can be safely ignored.
+Sensors: Order of sensors plugged into ZL6 Data Logger.
+Errors: List of potential issues with ZL6 Data Logger and sensors.

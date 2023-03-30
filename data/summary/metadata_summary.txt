@@ -28,3 +28,6 @@ relative_humidity_min: Daily minimum relative humidity.
 atmospheric_pressure_mean: Daily mean atmospheric pressure in kPa.
 atmospheric_pressure_max: Daily maximum atmospheric pressure in kPa.
 atmospheric_pressure_min: Daily minimum atmospheric pressure in kPa.
+battery_percent_mean: Daily mean battery power of solar powered logger (%).
+battery_percent_max: Daily maximum battery power of solar powered logger (%).
+battery_percent_min: Daily minimum battery power of solar powered logger (%).
