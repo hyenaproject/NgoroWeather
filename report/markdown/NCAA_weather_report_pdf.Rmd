@@ -1,5 +1,5 @@
 ---
-title: \Huge Weather Data Report
+title: \Huge Ngorongoro Crater Weather Report - Graphical representation of the trends in temperature and rainfall in the Ngorongoro Crater, Tanzania
 author: "Ngorongoro Hyena Project"
 date: "`r format(Sys.Date(), '%d/%m/%Y')`"
 output:
@@ -87,13 +87,26 @@ total_days <- sum(days_per_station$n)
 
 -----
 
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+
+# \Large Citation
+
+When using or referencing the Ngorongoro Crater Weather Report, please credit the members of the Ngorongoro Hyena Project who have compiled the data and generated the report, and cite as follows:
+
+> Bailey LD, Naman P, Oltumo L, Courtiol A, Davidian E, Höner OP. `r format(Sys.Date(), "%Y")` Ngorongoro Crater Weather Report - Graphical representation of the trends in temperature and rainfall in the Ngorongoro Crater, Tanzania. Downloaded on `r Sys.Date()` from https://github.com/hyenaproject/NgoroWeather
+
+\newpage
+
+-----
+
 # \Large Introduction
 
 \begin{normalsize}
 This report gives a summary of weather data collected in Ngorongoro Crater by the Ngorongoro Hyena Project between `r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`. We now have a network of `r length(all_names)` weather stations installed at different sites around the Ngorongoro Crater. These weather stations have been collecting data on temperature, rainfall, and humidity, giving us a detailed picture of weather conditions in Ngorongoro Crater that can help inform conservation management. Below are some key facts from our data collection so far:
 \end{normalsize}
-
-\vspace{-1.5cm}
 
 ```{r nr_days_BAN, echo = FALSE, fig.height=2, fig.width=5, fig.align='center'}
 
@@ -245,7 +258,7 @@ rownames(specs) <- c("Company", "Model", "Data collection frequency", "Resolutio
 
 specs |> 
   kbl(booktabs = TRUE, linesep = "", caption = "Technical specifications") |> 
-  kable_styling(full_width = FALSE, font_size = 10) |> 
+  kable_styling(full_width = TRUE, font_size = 10) |> 
   footnote(general = "Data from Meter Group")
 
 ```
@@ -304,13 +317,6 @@ ggplot() +
   geom_text(data = daily_mean |> 
               slice(n()), aes(x = date + 2, y = daily_mean, label = "AVG"),
             hjust = 0, family = "Montserrat600", fontface = "bold") + 
-  # geom_text(data = data.frame(x = as.Date("2022-01-20"),
-  #                             y = 17.6 + c(11.5, -10),
-  #                             label = c("ACACIA", "NGOITOKITOK")),
-  #           aes(x = x, y = y, label = label, colour = label),
-  #           hjust = 0.15, family = "Montserrat600", fontface = "bold", alpha = 0.5) +
-  # scale_fill_manual(values = c("grey25", "grey75")) +
-  # scale_colour_manual(values = c("grey25", "grey75")) +
   scale_x_date(name = "", date_labels = "%d/%m/%Y", limits = c(as.Date(NA), Sys.Date())) +
   scale_y_continuous(name = "Air temperature (°C)", limits = c(-10, 40), expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
@@ -442,13 +448,6 @@ ggplot() +
   labs(title = paste0("Over a 24h observation period temperature on Ngorongoro Crater floor<br> ranged between ", paste(paste0(round(c(min(daily_range$time_min),
                                                                                                                                        max(daily_range$time_max)), 0), "°C"), collapse = " - ")),
        subtitle = "Grey shaded area shows range at 30 minute intervals.<br>Solid black line is the mean temperature across all stations.") +
-  # geom_text(data = data.frame(x = 1080,
-  #                             y = 20 + c(11.5, -10),
-  #                             label = c("ACACIA", "NGOITOKITOK")),
-  #           aes(x = x, y = y, label = label, colour = label),
-  #           hjust = 0.15, family = "Montserrat600", fontface = "bold", alpha = 0.5) +
-  # scale_fill_manual(values = c("grey25", "grey75")) +
-  # scale_colour_manual(values = c("grey25", "grey75")) +
   scale_x_continuous(name = "",
                      limits = c(0, 1445),
                      breaks = seq(0, 1440, 120),
@@ -645,32 +644,6 @@ summary_data <- possible_dates |>
   summarise(binom::binom.wilson(n = n(), x = sum(rain_day))) |> 
   mutate(month = forcats::fct_reorder(month, .x = lubridate::my(month), .desc = FALSE))
 
-
-# summary_data <- input_data |>
-#   #Only deal with stations on crater floor
-#   filter(site_name != "lemala_rim") |>
-#   mutate(date = lubridate::as_date(date_time)) |>
-#   group_by(site_name_title, date) |> 
-#   summarise(daily_total = sum(precip), .groups = "drop") |> 
-#   mutate(month = as.factor(format(date, "%b %Y"))) |> 
-#   group_by(site_name_title, month) |> 
-#   summarise(rain_days = sum(daily_total > 1), .groups = "drop") |> 
-#   group_by(month) |> 
-#   summarise(rain_days = mean(rain_days),
-#             se = sqrt(mean(rain_days)/n())) |> 
-#   mutate(month = forcats::fct_reorder(month, .x = lubridate::my(month), .desc = FALSE))
-
-# group_by(date) |> 
-# summarise(daily_total = sum(precip), .groups = "drop") |>
-# mutate(month_dbl = lubridate::year(date)*12 + lubridate::month(date),
-#        month = as.factor(format(date, "%b %Y"))) |>
-# group_by(month) |>
-# summarise(rain_days = sum(daily_total > 1),
-#           month_dbl = first(month_dbl), .groups = "drop") |>
-# mutate(rain_days = round(rain_days, 2),
-#        month = forcats::fct_reorder(month, .x = month_dbl, .desc = FALSE)) |>
-# select(-month_dbl)
-
 ggplot() +
   geom_col(data = summary_data, aes(x = month, y = mean),
            colour = "black", width = 0.75,
@@ -681,13 +654,6 @@ ggplot() +
                 colour = "grey10") +
   labs(title = paste0("Proportion monthly rain days (>1mm) in Ngorongoro Crater ranged between <br>", paste(paste0(round(range(summary_data$mean), 1), " days"), collapse = " - ")),
        subtitle = "Grey bars shows proportion of rain days (>1mm) observed in a month.<br>Errorbars represent standard errors using Wilson method.") +
-  # geom_text(data = data.frame(x = 1,
-  #                             y = 10 + c(0.35, -0.35),
-  #                             label = c("ACACIA", "NGOITOKITOK")),
-  #           aes(x = x, y = y, label = label, colour = label),
-  #           hjust = 0, family = "Montserrat600", fontface = "bold", alpha = 0.5) +
-  # scale_fill_manual(values = c("grey25", "grey75")) +
-  # scale_colour_manual(values = c("grey25", "grey75")) +
   scale_x_discrete(name = "") +
   scale_y_continuous(name = "Proportion of rain days (>1mm)", expand = c(0, 0)) +
   theme_classic() +
