@@ -39,5 +39,7 @@ Imports:
     rmarkdown,
     sf,
     ggtext,
-    stringr
+    stringr,
+    ggplot2,
+    patchwork
 RoxygenNote: 7.2.3
