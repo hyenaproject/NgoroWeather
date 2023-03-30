@@ -53,6 +53,7 @@ jobs:
 
       - name: Build summary data
         run: |
+          library(NgoroWeather)
           load_package_database.weather(input.folder = "./data/raw", overwrite.db = "yes")
           output <- create_crater_weather.summary.table(variable = NULL)
           ## Remove .csv files from this folder
