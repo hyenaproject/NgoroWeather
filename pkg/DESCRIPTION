@@ -31,7 +31,6 @@ Imports:
     tidyr,
     purrr,
     withr,
-    gt,
     showtext,
     kableExtra,
     crayon,
