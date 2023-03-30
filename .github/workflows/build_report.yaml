@@ -58,8 +58,5 @@ jobs:
           git config user.email liam.bailey@liamdbailey.com
           git commit -m "Auto updating report"
 
-      - name: fetch from master
-        run: git fetch origin master
-
       - name: push code to master
-        run: git push origin HEAD:master
+        run: git push
