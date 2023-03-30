@@ -220,41 +220,52 @@ load_data_weatherstation.file <- function(excel.path, tz = "Africa/Dar_es_Salaam
   excel_data <- suppressMessages(load_data_excel(excel.path, col_names = FALSE, col_type = "text"))
 
   #Extract meta-data info
-  excel_data$Metadata |>
-    stats::setNames(nm = c("metadata_category", "info", "value")) |>
-    tidyr::drop_na("info") |>
-    tidyr::fill("metadata_category", .direction = "down") |>
+  meta_data <- stats::setNames(excel_data$Metadata, nm = c("metadata_category", "info", "value"))
+
+  meta_data |>
+    tidyr::drop_na(.data$info) |>
+    tidyr::fill(.data$metadata_category, .direction = "down") |>
     #Convert everything to lower snake case
     dplyr::mutate(dplyr::across(.cols = dplyr::everything(), .fns = hyenaR::recode_chr_snake.case)) |>
     dplyr::group_by(.data$metadata_category) -> meta_data
 
   #Clean weather measurements
-  #Use the first and second sheet. If there are multiple configurations
-  #in the data, it will take the most recent one.
-  excel_data[[1]] <- stats::setNames(excel_data[[1]], make.names(as.character(excel_data[[1]][3, ]), unique = TRUE))
+  #Use the first and second sheet.
+  #If there are multiple configurations in the data,
+  #it will combine them.
+  processed_data_configs <- excel_data[grepl(pattern = "Process", names(excel_data))]
+  purrr::map_df(.x = processed_data_configs, .f = ~{
 
-  excel_data[[1]] |>
-    dplyr::slice(4:dplyr::n()) |>
-    dplyr::mutate(date_time = hyenaR::recode_numeric_excel.to.date(as.numeric(.data$Timestamp), tz = tz)) |>
-    dplyr::mutate(station_name = meta_data$value[which(meta_data$info == "device_name")],
-                  site_name = meta_data$value[which(meta_data$info == "site_name")],
-                  latitude = meta_data$value[which(meta_data$info == "latitude")],
-                  longitude = meta_data$value[which(meta_data$info == "longitude")]) -> weather_data
+    output <- stats::setNames(..1, make.names(as.character(.[3, ]), unique = TRUE))
+
+    output |>
+      dplyr::slice(4:dplyr::n()) |>
+      dplyr::mutate(date_time = hyenaR::recode_numeric_excel.to.date(as.numeric(.data$Timestamp), tz = tz)) |>
+      dplyr::mutate(station_name = meta_data$value[which(meta_data$info == "device_name")],
+                    site_name = meta_data$value[which(meta_data$info == "site_name")],
+                    latitude = meta_data$value[which(meta_data$info == "latitude")],
+                    longitude = meta_data$value[which(meta_data$info == "longitude")])
+
+  }) -> weather_data
 
   weather_data |>
-    dplyr::select("station_name":"site_name", "date_time",
-                  "latitude", "longitude",
+    dplyr::select(.data$station_name:.data$site_name, .data$date_time,
+                  .data$latitude, .data$longitude,
                   ##TODO: We 'recode' to these col names in `check_function_arg.variable.weather`
                   ##So we don't really need to rename each one here
                   ##Could just do standard coercion to e.g. snake case
                   ##That way it will also work with dummy data that doesn't have all the cols.
-                  air_temp = "X.C.Air.Temperature",
-                  atmospheric_pressure = "kPa.Atmospheric.Pressure",
-                  relative_humidity = "RH.Relative.Humidity",
-                  precip = "mm.Precipitation",
-                  precip_max_hourly = "mm.h.Max.Precip.Rate",
-                  battery_percent = "X..Battery.Percent") |>
-    dplyr::mutate(dplyr::across("latitude":"battery_percent", .fns = as.numeric)) -> output
+                  air_temp = .data$X.C.Air.Temperature,
+                  atmospheric_pressure = .data$kPa.Atmospheric.Pressure,
+                  relative_humidity = .data$RH.Relative.Humidity,
+                  precip = .data$mm.Precipitation,
+                  precip_max_hourly = .data$mm.h.Max.Precip.Rate,
+                  battery_percent = .data$X..Battery.Percent) |>
+    dplyr::mutate(across(.data$latitude:.data$battery_percent, .fns = as.numeric)) |>
+    #Remove any cases where date_time is NA. These cannot be used.
+    dplyr::filter(!is.na(.data$date_time)) |>
+    #Arrange by date time
+    dplyr::arrange(.data$date_time) -> output
 
   #Run checks on important meta-data attributes
   meta_data <- check_weatherstation_metadata.file(metadata = meta_data, verbose = verbose)
@@ -317,6 +328,23 @@ load_data_weatherstation.all <- function(input.folder, verbose = TRUE) {
 
   #Combine data together
   output <- dplyr::bind_rows(df_list)
+
+  #Arrange by date time and remove any duplicates
+  output |>
+    dplyr::arrange(.data$date_time) |>
+    #Remove rows that have same date, temp and precip values.
+    dplyr::distinct(.data$date_time, .data$air_temp, .data$precip, .keep_all = TRUE) -> output
+
+  duplicates <- output |>
+    dplyr::group_by(date_time) |>
+    dplyr::mutate(n = dplyr::n()) |>
+    dplyr::filter(n > 1)
+
+  if (nrow(duplicates) > 0) {
+
+    stop("There is contradictory data for a given date-time")
+
+  }
 
   #Carry out additional set of checks when combining weather station data
   #If pass, assign as meta-data for output
