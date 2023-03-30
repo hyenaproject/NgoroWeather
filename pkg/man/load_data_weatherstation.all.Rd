@@ -19,5 +19,6 @@ A list with two items: weather data & station meta data
 }
 \examples{
 #Example data collected from IZW is stored with the package for example
-load_data_weatherstation.all(system.file("extdata/weather_Mlima", package = "hyenaR"))
+load_data_weatherstation.all(system.file("extdata/working_weather/weather_Mlima",
+package = "NgoroWeather"))
 }

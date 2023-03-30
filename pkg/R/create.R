@@ -7,9 +7,10 @@
 #'
 #' @examples
 #' #Example weather data collected from IZW
-#' test_data <- load_data_weatherstation.file(system.file("extdata/weather_Mlima",
-#'                                           "weather_data_test1.xlsx",
-#'                                           package = "hyenaR"))
+#' test_data <- load_data_weatherstation.file(
+#'   system.file("extdata/working_weather/weather_Mlima",
+#'   "weather_data_test1.xlsx",
+#'   package = "NgoroWeather"))
 #'
 #' #Extract metadata
 #' create_tbl_metadata(test_data)

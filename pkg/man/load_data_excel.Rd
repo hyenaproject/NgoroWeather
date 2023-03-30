@@ -20,12 +20,12 @@ Load all sheets from an excel file (.xls or .xslx).
 }
 \examples{
 #Example data collected from IZW is stored with the package for example
-load_data_excel(system.file("extdata/weather_Mlima",
+load_data_excel(system.file("extdata/working_weather/weather_Mlima",
                                           "weather_data_test1.xlsx",
-                                          package = "hyenaR"))
+                                          package = "NgoroWeather"))
 
 #Can pass arguments like ignoring columns names using ...
-load_data_excel(system.file("extdata/weather_Mlima",
+load_data_excel(system.file("extdata/working_weather/weather_Mlima",
                                           "weather_data_test1.xlsx",
-                                          package = "hyenaR"), col_names = FALSE)
+                                          package = "NgoroWeather"), col_names = FALSE)
 }

@@ -163,14 +163,14 @@ load_package_database.weather <- function(input.folder,
 #'
 #' @examples
 #' #Example data collected from IZW is stored with the package for example
-#' load_data_excel(system.file("extdata/weather_Mlima",
+#' load_data_excel(system.file("extdata/working_weather/weather_Mlima",
 #'                                           "weather_data_test1.xlsx",
-#'                                           package = "hyenaR"))
+#'                                           package = "NgoroWeather"))
 #'
 #' #Can pass arguments like ignoring columns names using ...
-#' load_data_excel(system.file("extdata/weather_Mlima",
+#' load_data_excel(system.file("extdata/working_weather/weather_Mlima",
 #'                                           "weather_data_test1.xlsx",
-#'                                           package = "hyenaR"), col_names = FALSE)
+#'                                           package = "NgoroWeather"), col_names = FALSE)
 load_data_excel <- function(excel.path, ...) {
 
   force(excel.path)
@@ -261,7 +261,7 @@ load_data_weatherstation.file <- function(excel.path, tz = "Africa/Dar_es_Salaam
                   precip = .data$mm.Precipitation,
                   precip_max_hourly = .data$mm.h.Max.Precip.Rate,
                   battery_percent = .data$X..Battery.Percent) |>
-    dplyr::mutate(across(.data$latitude:.data$battery_percent, .fns = as.numeric)) |>
+    dplyr::mutate(dplyr::across(.data$latitude:.data$battery_percent, .fns = as.numeric)) |>
     #Remove any cases where date_time is NA. These cannot be used.
     dplyr::filter(!is.na(.data$date_time)) |>
     #Arrange by date time
@@ -303,7 +303,8 @@ load_data_weatherstation.file <- function(excel.path, tz = "Africa/Dar_es_Salaam
 #'
 #' @examples
 #' #Example data collected from IZW is stored with the package for example
-#' load_data_weatherstation.all(system.file("extdata/weather_Mlima", package = "hyenaR"))
+#' load_data_weatherstation.all(system.file("extdata/working_weather/weather_Mlima",
+#' package = "NgoroWeather"))
 
 load_data_weatherstation.all <- function(input.folder, verbose = TRUE) {
 
@@ -336,9 +337,9 @@ load_data_weatherstation.all <- function(input.folder, verbose = TRUE) {
     dplyr::distinct(.data$date_time, .data$air_temp, .data$precip, .keep_all = TRUE) -> output
 
   duplicates <- output |>
-    dplyr::group_by(date_time) |>
+    dplyr::group_by(.data$date_time) |>
     dplyr::mutate(n = dplyr::n()) |>
-    dplyr::filter(n > 1)
+    dplyr::filter(.data$n > 1)
 
   if (nrow(duplicates) > 0) {
 
