@@ -2,8 +2,8 @@ on:
   push:
     branches: [main, master]
     paths:
-      - data/raw
-      - repor/markdown
+      - data/raw/**
+      - repor/markdown/**
 
 
 name: build_report
