@@ -72,6 +72,7 @@ create_weather_raw.table <- function(input.folder){
 #' Create summary statistics of weather
 #'
 #' @inheritParams arguments
+#' @export
 create_crater_weather.summary.table <- function(resolution = "day",
                                                 from = NULL, to = NULL, at = NULL,
                                                 variable = c("air_temp", "precip"),
