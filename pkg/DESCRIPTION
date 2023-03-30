@@ -41,5 +41,9 @@ Imports:
     ggtext,
     stringr,
     ggplot2,
-    patchwork
+    patchwork,
+    forcats,
+    scales,
+    binom,
+    glue
 RoxygenNote: 7.2.3
