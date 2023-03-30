@@ -606,10 +606,10 @@ summary_data |>
 
 \newpage
 
-### \normalsize Number of rain days (>1mm)
+### \normalsize Proportion of rain days (>1mm)
 
 \begin{normalsize}
-The below plot shows the number of rain days recorded each month on the floor of Ngorongoro Crater (days with rainfall >1mm) using data collected from `r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`.
+The below plot shows the proportion of rain days recorded each month on the floor of Ngorongoro Crater (days with rainfall >1mm) using data collected from `r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`.
 \end{normalsize}
 
 \vspace{5mm}
