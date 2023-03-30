@@ -32,7 +32,7 @@ jobs:
           #drat::addRepo("hyenaproject")
           #install.packages("hyenaR")
           install.packages("remotes")
-          remotes::install_github("hyenaproject/NgoroWeather/pkg", dependencies = TRUE)
+          remotes::install_github("hyenaproject/NgoroWeather", subdir = "pkg", dependencies = TRUE)
         shell: Rscript {0}
 
       - name: Build pdf report
