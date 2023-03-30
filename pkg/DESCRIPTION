@@ -26,7 +26,7 @@ LazyData: true
 Depends: 
     R (>= 3.4.0)
 Imports:
-    hyenaR (>= 0.9.999943),
+    hyenaR (>= 0.9.999942),
     dplyr,
     tidyr,
     purrr,
