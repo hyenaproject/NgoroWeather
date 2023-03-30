@@ -32,7 +32,8 @@ jobs:
           #drat::addRepo("hyenaproject")
           #install.packages("hyenaR")
           install.packages("remotes")
-          remotes::install_github("hyenaproject/NgoroWeather", subdir = "pkg", dependencies = TRUE)
+          ### Include auth_token that is ONLY for access public repos.
+          remotes::install_github("hyenaproject/NgoroWeather", subdir = "pkg", dependencies = TRUE, auth_token = "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")
         shell: Rscript {0}
 
       - name: Build pdf report
