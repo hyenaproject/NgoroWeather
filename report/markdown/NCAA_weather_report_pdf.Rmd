@@ -171,7 +171,8 @@ daily_sum <- input_data |>
   summarise(total_rain = sum(precip, na.rm = TRUE), .groups = "drop")
 
 max_rain <- daily_sum |> 
-  filter(total_rain == max(total_rain, na.rm = TRUE))
+  filter(total_rain == max(total_rain, na.rm = TRUE)) |> 
+  slice(1)
 
 ggplot() +
   geom_richtext(data = max_rain, aes(x = 0.5, y = 0.5, label = glue::glue("<span style='color:#1434A4; font-size:30pt'>**{BAN}mm**</span><br><span style='color:grey25; font-size:10pt'>Highest recorded daily rainfall<br>{site}<br>{date}</span>",
@@ -766,7 +767,8 @@ daily_sum <- site_data |>
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
 
 max_rain <- daily_sum |> 
-  filter(total_rain == max(total_rain))
+  filter(total_rain == max(total_rain)) |> 
+  slice(1)
 
 plot_rain_1 <- ggplot() +
   geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
@@ -876,7 +878,8 @@ daily_sum <- site_data |>
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
 
 max_rain <- daily_sum |>
-  filter(total_rain == max(total_rain))
+  filter(total_rain == max(total_rain)) |> 
+  slice(1)
 
 plot_rain_2 <- ggplot() +
   geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
@@ -986,7 +989,8 @@ daily_sum <- site_data |>
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
 
 max_rain <- daily_sum |>
-  filter(total_rain == max(total_rain))
+  filter(total_rain == max(total_rain)) |> 
+  slice(1)
 
 plot_rain_3 <- ggplot() +
   geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
@@ -1094,7 +1098,8 @@ daily_sum <- site_data |>
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
 
 max_rain <- daily_sum |>
-  filter(total_rain == max(total_rain))
+  filter(total_rain == max(total_rain)) |> 
+  slice(1)
 
 plot_rain_4 <- ggplot() +
   geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
