@@ -284,6 +284,9 @@ knitr::include_graphics(path = c("assets/acacia_close_small_crop.jpg", "assets/n
 
 \begin{normalsize}
 The below plot shows temperature on the floor of Ngorongoro Crater between `r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`. It shows the daily mean temperature calculated across all stations (solid black line) and the daily temperature range (shaded areas). The table beneath the plot shows monthly mean temperature for each station separately, including data collected on the Ngorongoro Crater rim. Cell colours help to distinguish cooler months (yellow) from warmer months (red).
+
+\textbf{NOTE:} Months with >7 days of missing data are excluded from the table.
+
 \end{normalsize}
 
 \vspace{2cm}
@@ -317,7 +320,7 @@ ggplot() +
   geom_text(data = daily_mean |> 
               slice(n()), aes(x = date + 2, y = daily_mean, label = "AVG"),
             hjust = 0, family = "Montserrat600", fontface = "bold") + 
-  scale_x_date(name = "", date_labels = "%d/%m/%Y", limits = c(as.Date(NA), Sys.Date())) +
+  scale_x_date(name = "", date_labels = "%d/%m/%Y", limits = c(as.Date(NA), Sys.Date() + 10)) +
   scale_y_continuous(name = "Air temperature (°C)", limits = c(-10, 40), expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
   labs(title = paste0("Temperature on Ngorongoro Crater floor ranged between <br>", paste(paste0(round(range(filter(input_data, site_name != "lemala_rim")$air_temp), 0), "°C"), collapse = " - ")),
@@ -357,7 +360,7 @@ summary_data <- possible_dates |>
          month = format(date, "%b %Y")) |> 
   group_by(site_name_title, month) |> 
   ## Filter cases where >=1 week of data is missing
-  filter(sum(is.na(daily_mean)) < 7) |> 
+  filter(sum(is.na(daily_mean)) <= 7) |> 
   summarise(monthly_mean = mean(daily_mean, na.rm = TRUE),
             month_dbl = first(month_dbl), .groups = "drop") |>
   mutate(monthly_mean = round(monthly_mean, 2),
@@ -480,6 +483,9 @@ ggplot() +
 
 \begin{normalsize}
 The below plot shows the mean daily rainfall on the floor of Ngorongoro Crater in each month using data collected from `r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`. The table beneath the plot shows the mean daily rainfall values for each station separately. Cell colours help to distinguish drier months (light blue) from wetter months (dark blue).
+
+\textbf{NOTE:} Months with >7 days of missing data are excluded.
+
 \end{normalsize}
 
 \vspace{5mm}
@@ -505,7 +511,7 @@ summary_data <- possible_dates |>
          month = as.factor(format(date, "%b %Y"))) |> 
   group_by(site_name_title, month) |> 
   ## Filter cases where >=1 week of data is missing
-  filter(sum(is.na(daily_total)) < 7) |> 
+  filter(sum(is.na(daily_total)) <= 7) |> 
   group_by(month) |> 
   summarise(mean_rain = mean(daily_total, na.rm = TRUE),
             se = sd(daily_total, na.rm = TRUE)/sqrt(n()),
@@ -559,7 +565,7 @@ summary_data <- possible_dates |>
          month = as.factor(format(date, "%b %Y"))) |> 
   group_by(site_name_title, month) |> 
   ## Filter cases where >=1 week of data is missing
-  filter(sum(is.na(daily_total)) < 7) |> 
+  filter(sum(is.na(daily_total)) <= 7) |> 
   summarise(mean_rain = mean(daily_total, na.rm = TRUE),
             month_dbl = first(month_dbl), .groups = "drop") |>
   mutate(mean_rain = round(mean_rain, 2),
@@ -609,6 +615,9 @@ summary_data |>
 
 \begin{normalsize}
 The below plot shows the proportion of rain days recorded each month on the floor of Ngorongoro Crater (days with rainfall >1mm) using data collected from `r format(start_date, "%d/%m/%Y")` - `r format(end_date, "%d/%m/%Y")`.
+
+\textbf{NOTE:} Months with >7 days of missing data are excluded.
+
 \end{normalsize}
 
 \vspace{5mm}
@@ -635,7 +644,7 @@ summary_data <- possible_dates |>
          month = as.factor(format(date, "%b %Y"))) |> 
   group_by(site_name_title, month) |> 
   ## Filter cases where >=1 week of data is missing
-  filter(sum(is.na(daily_total)) < 7) |> 
+  filter(sum(is.na(daily_total)) <= 7) |> 
   ## Filter only those days where data were collected
   ungroup() |> 
   filter(!is.na(daily_total)) |> 
@@ -735,7 +744,7 @@ plot_temp_1 <- ggplot() +
   # geom_segment(data = min_temp, aes(x = date - lubridate::days(12), y = air_temp - 1.5,
   #                                   xend = date, yend = air_temp)) +
   geom_point(data = min_temp, aes(x = date, y = air_temp), size = 2, colour = "#0DA2FF") +
-  scale_x_date(name = "", date_labels = "%d/%m/%Y", limits = c(as.Date(NA), Sys.Date())) +
+  scale_x_date(name = "", date_labels = "%d/%m/%Y", limits = c(as.Date(NA), Sys.Date() + 10)) +
   scale_y_continuous(name = "Air temperature (°C)", limits = c(-10, 40), expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
   # labs(caption = paste0("Data: ", all_names[1], " weather station collected at 30 min intervals")) +
@@ -768,7 +777,7 @@ plot_rain_1 <- ggplot() +
   # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
   #                                   xend = date_time, yend = total_rain)) +
   geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
-  scale_x_datetime(name = "", date_labels = "%d/%m/%Y") +
+  scale_x_datetime(name = "", date_labels = "%d/%m/%Y", limits = c(as.POSIXct(NA), Sys.Date() + 10)) +
   scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
   labs(caption = paste0("Data: ", all_names[1], " weather station collected at 30 min intervals")) +
   coord_cartesian(clip = "off") +
@@ -844,7 +853,7 @@ plot_temp_2 <- ggplot() +
   # geom_segment(data = min_temp, aes(x = date - lubridate::days(12), y = air_temp - 0.75,
   #                                   xend = date, yend = air_temp)) +
   geom_point(data = min_temp, aes(x = date, y = air_temp), size = 2, colour = "#0DA2FF") +
-  scale_x_date(name = "", date_labels = "%d/%m/%Y") +
+  scale_x_date(name = "", date_labels = "%d/%m/%Y", limits = c(as.Date(NA), Sys.Date() + 10)) +
   scale_y_continuous(name = "Air temperature (°C)", limits = c(-10, 40), expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
   # labs(caption = paste0("Data: ", all_names[2], " weather station collected at 30 min intervals")) +
@@ -878,7 +887,7 @@ plot_rain_2 <- ggplot() +
   # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
   #                                   xend = date_time, yend = total_rain)) +
   geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
-  scale_x_datetime(name = "", date_labels = "%d/%m/%Y") +
+  scale_x_datetime(name = "", date_labels = "%d/%m/%Y", limits = c(as.POSIXct(NA), Sys.Date() + 10)) +
   labs(caption = paste0("Data: ", all_names[2], " weather station collected at 30 min intervals")) +
   scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
@@ -955,7 +964,7 @@ plot_temp_3 <- ggplot() +
   # geom_segment(data = min_temp, aes(x = date - lubridate::days(12), y = air_temp - 1.5,
   #                                   xend = date, yend = air_temp)) +
   geom_point(data = min_temp, aes(x = date, y = air_temp), size = 2, colour = "#0DA2FF") +
-  scale_x_date(name = "", date_labels = "%d/%m/%Y") +
+  scale_x_date(name = "", date_labels = "%d/%m/%Y", limits = c(as.Date(NA), Sys.Date() + 10)) +
   scale_y_continuous(name = "Air temperature (°C)", limits = c(-10, 40), expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
   # labs(caption = paste0("Data: ", all_names[1], " weather station collected at 30 min intervals")) +
@@ -981,14 +990,14 @@ max_rain <- daily_sum |>
 
 plot_rain_3 <- ggplot() +
   geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
-  geom_richtext(data = max_rain, aes(x = date_time - lubridate::days(20), y = total_rain + 5,
+  geom_richtext(data = max_rain, aes(x = date_time + lubridate::days(20), y = total_rain + 5,
                                      label = glue::glue("<span style='color:#1434A4; font-size:15pt'>**{rain}mm**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded daily rainfall<br>{date}</span>",
                                                         rain = total_rain, date = format(date_time, "%d/%m/%Y"))),
                 fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
   # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
   #                                   xend = date_time, yend = total_rain)) +
   geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
-  scale_x_datetime(name = "", date_labels = "%d/%m/%Y") +
+  scale_x_datetime(name = "", date_labels = "%d/%m/%Y", limits = c(as.POSIXct(NA), Sys.Date() + 10)) +
   scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
   labs(caption = paste0("Data: ", all_names[3], " weather station collected at 30 min intervals")) +
   coord_cartesian(clip = "off") +
@@ -1063,7 +1072,7 @@ plot_temp_4 <- ggplot() +
   # geom_segment(data = min_temp, aes(x = date - lubridate::days(12), y = air_temp - 1.5,
   #                                   xend = date, yend = air_temp)) +
   geom_point(data = min_temp, aes(x = date, y = air_temp), size = 2, colour = "#0DA2FF") +
-  scale_x_date(name = "", date_labels = "%d/%m/%Y") +
+  scale_x_date(name = "", date_labels = "%d/%m/%Y", limits = c(as.Date(NA), Sys.Date() + 10)) +
   scale_y_continuous(name = "Air temperature (°C)", limits = c(-10, 40), expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
   # labs(caption = paste0("Data: ", all_names[1], " weather station collected at 30 min intervals")) +
@@ -1096,7 +1105,7 @@ plot_rain_4 <- ggplot() +
   # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
   #                                   xend = date_time, yend = total_rain)) +
   geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
-  scale_x_datetime(name = "", date_labels = "%d/%m/%Y") +
+  scale_x_datetime(name = "", date_labels = "%d/%m/%Y", limits = c(as.POSIXct(NA), Sys.Date() + 10)) +
   scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
   labs(caption = paste0("Data: ", all_names[4], " weather station collected at 30 min intervals")) +
   coord_cartesian(clip = "off") +
