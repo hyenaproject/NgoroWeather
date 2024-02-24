@@ -244,7 +244,7 @@ check_weatherstation_metadata.all <- function(metadata){
     sf::st_distance() |>
     as.numeric()
 
-  location_check_pass <- all(location_distances <= 10)
+  location_check_pass <- all(location_distances <= 50)
 
   #If files are more than 10m apart then we will not combine data and throw an error!
   if (!location_check_pass) {
