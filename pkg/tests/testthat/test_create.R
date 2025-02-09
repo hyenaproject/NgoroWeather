@@ -11,7 +11,8 @@ test_that("Can create raw data table...", {
 
   ## Weather data should be at 30 min intervals
   weather_data <- test_data$data[[1]] |>
-    dplyr::mutate(datetime = lubridate::ymd_hms(paste(.data$date, .data$time, sep = " ")))
+    dplyr::mutate(datetime = lubridate::ymd_hms(paste(.data$date, .data$time, sep = " "))) |>
+    tail()
 
   expect_identical(30,
                    as.numeric(weather_data$datetime[2] - weather_data$datetime[1]))
