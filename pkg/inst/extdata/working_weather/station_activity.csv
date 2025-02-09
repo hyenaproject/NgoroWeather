@@ -1,0 +1,5 @@
+﻿station_name,site_name,start_date,end_date,observation_period,comment,latitude,longitude,temperature,rainfall
+jua,mlima,29/9/2021,19/2/2022,1,Removed due to hyena damage,-3.209525,35.60065,TRUE,TRUE
+jua,mlima,26/3/2022,Inf,2,Reinstalled,-3.209525,35.60065,TRUE,TRUE
+upepo,acacia,28/9/2021,26/3/2022,3,Issues with firmware,-3.232544,35.50952,TRUE,TRUE
+upepo,acacia,28/3/2022,Inf,4,Reinstalled,-3.232544,35.50952,TRUE,TRUE
