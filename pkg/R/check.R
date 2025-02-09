@@ -13,7 +13,8 @@
 #' #check_function_arg.station("not_a_station")
 check_function_arg.station <- function(station){
 
-  possible_stations <- unique(weather_station_activity$station_name)
+  possible_stations <- c("jua", "upepo", "unyevu", "mvua")
+    # unique(weather_station_activity$station_name)
 
   if (is.null(station)) {
     return(possible_stations)
@@ -49,7 +50,8 @@ check_function_arg.location.weather <- function(location){
 
   ## FIXME: Repetitive other checks that just compare to a possible set of categories
   # Could create a single func `check_function_arg.category(value, variable_name)`
-  possible_values <- unique(weather_station_activity$site_name)
+  possible_values <- c("ngoitokitok", "acacia", "jackal_hill", "lemala_rim")
+    # unique(weather_station_activity$site_name)
 
   if (is.null(location)) {
     return(possible_values)

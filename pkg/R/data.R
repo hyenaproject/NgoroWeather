@@ -17,5 +17,5 @@
 NULL
 
 utils::globalVariables(".database")
-utils::globalVariables("weather_station_activity")
+# utils::globalVariables("weather_station_activity")
 utils::globalVariables(".data")
