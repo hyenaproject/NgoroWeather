@@ -62,7 +62,14 @@ load_package_database.weather(input.folder = "../../data/raw",
                               overwrite.db = "yes")
 ```
 
+```{r}
+weather_station_activity <- create_station_activity.log("../../data/raw")
+```
+
 ```{r, include = FALSE}
+
+na_cutoff_daily <- 1
+na_cutoff_monthly <- 8
 
 #For now, just use all data. (we leave location/station blank to return all locations)
 input_data <- create_crater_weather.table(variable = c("air_temp", "precip")) |> 
@@ -70,6 +77,26 @@ input_data <- create_crater_weather.table(variable = c("air_temp", "precip")) |>
   dplyr::mutate(site_name_title = dplyr::case_when(site_name == "jackal_hill" ~ "Jackal Hill",
                                                    site_name == "lemala_rim" ~ "Lemala (Rim)",
                                                    TRUE ~ stringr::str_to_title(site_name)))
+
+input_data_temp <- input_data |> 
+  filter(temperature) |>  ## Only when it's an active temperature periods
+  ## Filter cases where there are too many NAs
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(site_name_title, date) |> 
+  mutate(nrNA = sum(is.na(air_temp)),
+         .groups = "drop") |> 
+  filter(nrNA < na_cutoff_daily) |> 
+  ungroup()
+
+input_data_rain <- input_data |> 
+  filter(rainfall) |>  ## Only when it's an active temperature periods
+  ## Filter cases where there are too many NAs
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(site_name_title, date) |> 
+  mutate(nrNA = sum(is.na(air_temp)),
+         .groups = "drop") |> 
+  filter(nrNA < na_cutoff_daily) |> 
+  ungroup()
 
 all_names <- unique(input_data$site_name_title)
 
@@ -127,7 +154,7 @@ ggplot() +
 
 ```{r max_temp_BAN, echo = FALSE, fig.height=2, fig.width=5, fig.align='center'}
 
-max_temp <- input_data |> 
+max_temp <- input_data_temp |> 
   filter(air_temp == max(air_temp, na.rm = TRUE))
 
 ggplot() +
@@ -146,7 +173,7 @@ ggplot() +
 
 ```{r min_temp_BAN, echo = FALSE, fig.height=2, fig.width=5, fig.align='center'}
 
-min_temp <- input_data |> 
+min_temp <- input_data_temp |> 
   filter(air_temp == min(air_temp, na.rm = TRUE))
 
 ggplot() +
@@ -164,8 +191,7 @@ ggplot() +
 \vspace{-2cm}
 
 ```{r max_rain_BAN, echo = FALSE, fig.height=2, fig.width=5, fig.align='center'}
-
-daily_sum <- input_data |> 
+daily_sum <- input_data_rain |> 
   mutate(date = lubridate::as_date(date_time)) |> 
   group_by(site_name_title, date) |> 
   summarise(total_rain = sum(precip, na.rm = TRUE), .groups = "drop")
@@ -206,7 +232,7 @@ crater_rim <- hyenaR::sf_hyenaR$rim_polygon
 
 crater_contours <- hyenaR::sf_hyenaR$crater_contours
 
-station_points <- bind_cols(weather_station_activity, sf::st_coordinates(weather_station_activity)) |> 
+station_points <- bind_cols(weather_station_activity$activity_log, sf::st_coordinates(weather_station_activity$activity_log)) |> 
   #Again, use title case
   dplyr::mutate(location_title = dplyr::case_when(site_name == "jackal_hill" ~ "Jackal Hill",
                                                   site_name == "lemala_rim" ~ "Lemala (Rim)",
@@ -295,24 +321,24 @@ The below plot shows temperature on the floor of Ngorongoro Crater between `r fo
 ```{r temp_graph, fig.width=10, fig.height=7, echo = FALSE}
 
 #Determine mean of each day from across both stations
-daily_mean <- input_data |> 
+daily_mean <- input_data_temp |> 
   #Only deal with stations on crater floor
   filter(site_name != "lemala_rim") |> 
   mutate(date = lubridate::as_date(date_time)) |> 
   group_by(date) |> 
-  summarise(daily_mean = mean(air_temp),
+  summarise(daily_mean = mean(air_temp, na.rm = TRUE),
             .groups = "drop") |> 
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam")) |> 
   #Remove the last day because it can often be a bit weird if we don't have all data
   slice(-n())
 
 #Take daily max and min from each station (30min is too frequent)
-thinned_data <- input_data |> 
+thinned_data <- input_data_temp |> 
   filter(site_name != "lemala_rim") |> 
   mutate(date = lubridate::as_date(date_time)) |> 
   group_by(date) |> 
-  summarise(min = min(air_temp),
-            max = max(air_temp),
+  summarise(min = min(air_temp, na.rm = TRUE),
+            max = max(air_temp, na.rm = TRUE),
             .groups = "drop")
 
 ggplot() +
@@ -324,7 +350,7 @@ ggplot() +
   scale_x_date(name = "", date_labels = "%d/%m/%Y", limits = c(as.Date(NA), Sys.Date() + 10)) +
   scale_y_continuous(name = "Air temperature (°C)", limits = c(-10, 40), expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
-  labs(title = paste0("Temperature on Ngorongoro Crater floor ranged between <br>", paste(paste0(round(range(filter(input_data, site_name != "lemala_rim")$air_temp), 0), "°C"), collapse = " - ")),
+  labs(title = paste0("Temperature on Ngorongoro Crater floor ranged between <br>", paste(paste0(round(range(filter(input_data_temp, site_name != "lemala_rim")$air_temp, na.rm = TRUE), 0), "°C"), collapse = " - ")),
        subtitle = "Grey shaded area shows daily range.<br>Solid black line is the daily mean temperature across all stations.") +
   theme_classic() +
   theme(legend.position = "none",
@@ -345,15 +371,16 @@ ggplot() +
 ```{r temp_heatmap, echo = FALSE}
 
 ## Create list of possible dates for each station
-possible_dates <- input_data |> 
+possible_dates <- input_data_temp |> 
   group_by(site_name_title) |> 
   reframe(date = seq.Date(from = lubridate::floor_date(min(as.Date(date_time)), unit = "month"),
                           to = lubridate::ceiling_date(max(as.Date(date_time)), unit = "month") - 1, by = "day"))
 
-daily_data <- input_data |>
+daily_data <- input_data_temp |>
   mutate(date = lubridate::as_date(date_time)) |> 
   group_by(site_name_title, date) |> 
-  summarise(daily_mean = mean(air_temp), .groups = "drop")
+  summarise(daily_mean = mean(air_temp, na.rm = TRUE),
+            .groups = "drop")
 
 summary_data <- possible_dates |> 
   left_join(daily_data, by = c("site_name_title", "date")) |> 
@@ -361,7 +388,7 @@ summary_data <- possible_dates |>
          month = format(date, "%b %Y")) |> 
   group_by(site_name_title, month) |> 
   ## Filter cases where >=1 week of data is missing
-  filter(sum(is.na(daily_mean)) <= 7) |> 
+  filter(sum(is.na(daily_mean)) < na_cutoff_monthly) |> 
   summarise(monthly_mean = mean(daily_mean, na.rm = TRUE),
             month_dbl = first(month_dbl), .groups = "drop") |>
   mutate(monthly_mean = round(monthly_mean, 2),
@@ -418,29 +445,30 @@ The below plot shows temperature variation within Ngorongoro Crater over a 24h o
 ```{r daily_temp_graph, fig.width=10, fig.height=7, echo = FALSE}
 
 #Determine mean of each 30min from across both stations
-time_mean <- input_data |> 
+time_mean <- input_data_temp |> 
   #Only deal with stations on crater floor
   filter(site_name != "lemala_rim") |> 
   mutate(time_cat = format(date_time, "%H:%M"),
          time_dbl = lubridate::hour(date_time)*60 + lubridate::minute(date_time)) |> 
   group_by(time_cat) |> 
-  summarise(time_mean = mean(air_temp),
+  summarise(time_mean = mean(air_temp, na.rm = TRUE),
             time_dbl = first(time_dbl), .groups = "drop")
 
 #Take daily max and min from each station (30min is too frequent)
-daily_data <- input_data |> 
+daily_data <- input_data_temp |> 
   #Only deal with stations on crater floor
   filter(site_name != "lemala_rim") |> 
   mutate(date_grp = paste(format(date_time, "%d/%m/%Y"), station_name),
          time_dbl = lubridate::hour(date_time)*60 + lubridate::minute(date_time))
 
 #Alternative using ribbon
-daily_range <- input_data |> 
+daily_range <- input_data_temp |> 
+  filter(site_name != "lemala_rim") |> 
   mutate(time_cat = format(date_time, "%H:%M"),
          time_dbl = lubridate::hour(date_time)*60 + lubridate::minute(date_time)) |> 
   group_by(time_cat) |> 
-  summarise(time_min = min(air_temp),
-            time_max = max(air_temp),
+  summarise(time_min = min(air_temp, na.rm = TRUE),
+            time_max = max(air_temp, na.rm = TRUE),
             time_dbl = first(time_dbl), .groups = "drop")
 
 ggplot() +
@@ -494,17 +522,18 @@ The below plot shows the mean daily rainfall on the floor of Ngorongoro Crater i
 ```{r rain_graph_mm, fig.width=12, fig.height=8, echo = FALSE}
 
 ## Create list of possible dates for each station
-possible_dates <- input_data |> 
+possible_dates <- input_data_rain |> 
   group_by(site_name_title) |> 
   reframe(date = seq.Date(from = lubridate::floor_date(min(lubridate::as_date(date_time)), unit = "month"),
                           to = lubridate::ceiling_date(max(lubridate::as_date(date_time)), unit = "month") - 1, by = "day"))
 
-daily_data <- input_data |>
+daily_data <- input_data_rain |>
   #Only deal with stations on crater floor
   filter(site_name != "lemala_rim") |>
   mutate(date = lubridate::as_date(date_time, tz = "Africa/Dar_es_Salaam")) |> 
   group_by(site_name_title, date) |> 
-  summarise(daily_total = sum(precip), .groups = "drop")
+  summarise(daily_total = sum(precip, na.rm = TRUE),
+            .groups = "drop")
 
 summary_data <- possible_dates |> 
   left_join(daily_data, by = c("site_name_title", "date")) |> 
@@ -512,7 +541,7 @@ summary_data <- possible_dates |>
          month = as.factor(format(date, "%b %Y"))) |> 
   group_by(site_name_title, month) |> 
   ## Filter cases where >=1 week of data is missing
-  filter(sum(is.na(daily_total)) <= 7) |> 
+  filter(sum(is.na(daily_total)) < na_cutoff_monthly) |> 
   group_by(month) |> 
   summarise(mean_rain = mean(daily_total, na.rm = TRUE),
             se = sd(daily_total, na.rm = TRUE)/sqrt(n()),
@@ -550,15 +579,16 @@ ggplot() +
 ```{r rain_heatmap, echo = FALSE}
 
 ## Create list of possible dates for each station
-possible_dates <- input_data |> 
+possible_dates <- input_data_rain |> 
   group_by(site_name_title) |> 
   reframe(date = seq.Date(from = lubridate::floor_date(min(lubridate::as_date(date_time)), unit = "month"),
                           to = lubridate::ceiling_date(max(lubridate::as_date(date_time)), unit = "month") - 1, by = "day"))
 
-daily_data <- input_data |>
+daily_data <- input_data_rain |>
   mutate(date = lubridate::as_date(date_time, tz = "Africa/Dar_es_Salaam")) |> 
   group_by(site_name_title, date) |> 
-  summarise(daily_total = sum(precip), .groups = "drop")
+  summarise(daily_total = sum(precip, na.rm = TRUE),
+            .groups = "drop")
 
 summary_data <- possible_dates |> 
   left_join(daily_data, by = c("site_name_title", "date")) |> 
@@ -566,7 +596,7 @@ summary_data <- possible_dates |>
          month = as.factor(format(date, "%b %Y"))) |> 
   group_by(site_name_title, month) |> 
   ## Filter cases where >=1 week of data is missing
-  filter(sum(is.na(daily_total)) <= 7) |> 
+  filter(sum(is.na(daily_total)) < na_cutoff_monthly) |> 
   summarise(mean_rain = mean(daily_total, na.rm = TRUE),
             month_dbl = first(month_dbl), .groups = "drop") |>
   mutate(mean_rain = round(mean_rain, 2),
@@ -580,7 +610,7 @@ summary_data <- possible_dates |>
   #arrange cols
   select(ACACIA, NGOITOKITOK, `JACKAL HILL`, `LEMALA (RIM)`)
 
-rain_palette <- scales::col_numeric(c("#FFFFFF", "#DFF6FF", "#5D8BF4", "#2D31FA", "#051367"), domain = c(0, 10), na.color = "#cccccc")
+rain_palette <- scales::col_numeric(c("#FFFFFF", "#DFF6FF", "#5D8BF4", "#2D31FA", "#051367"), domain = c(0, 16), na.color = "#cccccc")
 
 summary_data |> 
   kbl(booktabs = TRUE, caption = "Monthly mean rainfall (mm)",
@@ -626,17 +656,17 @@ The below plot shows the proportion of rain days recorded each month on the floo
 ```{r rain_graph_days, fig.width=12, fig.height=7, echo = FALSE}
 
 ## Create list of possible dates for each station
-possible_dates <- input_data |> 
+possible_dates <- input_data_rain |> 
   group_by(site_name_title) |> 
   reframe(date = seq.Date(from = lubridate::floor_date(min(lubridate::as_date(date_time)), unit = "month"),
                           to = lubridate::ceiling_date(max(lubridate::as_date(date_time)), unit = "month") - 1, by = "day"))
 
-daily_data <- input_data |>
+daily_data <- input_data_rain |>
   #Only deal with stations on crater floor
   filter(site_name != "lemala_rim") |>
   mutate(date = lubridate::as_date(date_time, tz = "Africa/Dar_es_Salaam")) |> 
   group_by(site_name_title, date) |> 
-  summarise(daily_total = sum(precip),
+  summarise(daily_total = sum(precip, na.rm = TRUE),
             rain_day = daily_total > 1, .groups = "drop")
 
 summary_data <- possible_dates |> 
@@ -645,7 +675,7 @@ summary_data <- possible_dates |>
          month = as.factor(format(date, "%b %Y"))) |> 
   group_by(site_name_title, month) |> 
   ## Filter cases where >=1 week of data is missing
-  filter(sum(is.na(daily_total)) <= 7) |> 
+  filter(sum(is.na(daily_total)) < na_cutoff_monthly) |> 
   ## Filter only those days where data were collected
   ungroup() |> 
   filter(!is.na(daily_total)) |> 
@@ -662,7 +692,7 @@ ggplot() +
                 width = 0, linewidth = 0.75,
                 position = position_dodge(width = 0.75),
                 colour = "grey10") +
-  labs(title = paste0("Proportion monthly rain days (>1mm) in Ngorongoro Crater ranged between <br>", paste(paste0(round(range(summary_data$mean), 1), " days"), collapse = " - ")),
+  labs(title = paste0("Proportion monthly rain days (>1mm) in Ngorongoro Crater ranged between <br>", paste(paste0(round(range(summary_data$mean), 1), " "), collapse = " - ")),
        subtitle = "Grey bars shows proportion of rain days (>1mm) observed in a month.<br>Errorbars represent standard errors using Wilson method.") +
   scale_x_discrete(name = "") +
   scale_y_continuous(name = "Proportion of rain days (>1mm)", expand = c(0, 0)) +
@@ -697,14 +727,14 @@ Below we provide more detailed temperature and rainfall plots for each of our `r
 ```{r temp_graph1, echo = FALSE}
 
 #Site data
-site_data <- input_data |> 
+site_data <- input_data_temp |> 
   filter(site_name_title == all_names[1])
 
 #Determine mean of each day from across both stations
 daily_mean <- site_data |> 
   mutate(date = lubridate::as_date(date_time)) |> 
   group_by(date) |> 
-  summarise(daily_mean = mean(air_temp),
+  summarise(daily_mean = mean(air_temp, na.rm = TRUE),
             observation_period = first(observation_period)) |> 
   slice(-n())
 
@@ -759,18 +789,42 @@ plot_temp_1 <- ggplot() +
 
 ```{r rain_graph1, echo = FALSE}
 
+site_data_rain <- input_data_rain |> 
+  filter(site_name_title == all_names[1])
+
+## Identify unmonitored periods and separate
+site_data_unmonitored <- input_data |> 
+  filter(site_name_title == all_names[1] & !rainfall) |> 
+  mutate(timediff = c(30, as.numeric(diff(date_time))),
+         group = c(1, rep(NA_real_, times = (n() - 1))))
+
+site_data_unmonitored[site_data_unmonitored$timediff > 60, ]$group <- (1:sum(site_data_unmonitored$timediff > 60) + 1)
+
+site_data_unmonitored <- site_data_unmonitored |> 
+  tidyr::fill(group, .direction = "down") |> 
+  group_by(group) |> 
+  summarise(start = min(date_time),
+            end = max(date_time)) |> 
+  tidyr::pivot_longer(cols = c(start, end))
+
 #Determine mean of each day from across both stations
-daily_sum <- site_data |> 
+daily_sum <- site_data_rain |> 
   mutate(date = lubridate::as_date(date_time)) |> 
   group_by(date) |> 
-  summarise(total_rain = sum(precip)) |> 
+  summarise(total_rain = sum(precip, na.rm = TRUE)) |> 
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
 
 max_rain <- daily_sum |> 
-  filter(total_rain == max(total_rain)) |> 
+  filter(total_rain == max(total_rain, na.rm = TRUE)) |> 
   slice(1)
 
+rain_limit <- 140
+
 plot_rain_1 <- ggplot() +
+  geom_area(data = site_data_unmonitored,
+              aes(x = value, y = rain_limit, group = group,
+                  fill = "No data collected"),
+            alpha = 0.5, colour = NA) +
   geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
   geom_richtext(data = max_rain, aes(x = date_time - lubridate::days(20), y = total_rain + 5,
                                      label = glue::glue("<span style='color:#1434A4; font-size:15pt'>**{rain}mm**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded daily rainfall<br>{date}</span>",
@@ -779,12 +833,13 @@ plot_rain_1 <- ggplot() +
   # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
   #                                   xend = date_time, yend = total_rain)) +
   geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
+  scale_fill_manual(values = "grey70", name = NULL) +
   scale_x_datetime(name = "", date_labels = "%d/%m/%Y", limits = c(as.POSIXct(NA), Sys.Date() + 10)) +
-  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
+  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, rain_limit), breaks = seq(0, 125, 25), expand = c(0, 0)) +
   labs(caption = paste0("Data: ", all_names[1], " weather station collected at 30 min intervals")) +
   coord_cartesian(clip = "off") +
   theme_classic() +
-  theme(legend.position = "none",
+  theme(legend.position = "bottom",
         axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
         axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
         axis.line = element_line(colour = "grey10"),
@@ -807,30 +862,30 @@ plot_temp_1 + plot_rain_1 + patchwork::plot_annotation(tag_levels = "A", tag_suf
 ```{r temp_graph2, echo = FALSE}
 
 #Site data
-site_data <- input_data |>
+site_data <- input_data_temp |>
   filter(site_name_title == all_names[2])
 
 #Determine mean of each day from across both stations
 daily_mean <- site_data |>
   mutate(date = lubridate::as_date(date_time)) |>
   group_by(date) |>
-  summarise(daily_mean = mean(air_temp),
+  summarise(daily_mean = mean(air_temp, na.rm = TRUE),
             observation_period = first(observation_period)) |>
   slice(-n())
 
 max_temp <- site_data  |>
   mutate(date = lubridate::as_date(date_time)) |>
-  filter(air_temp == max(air_temp))
+  filter(air_temp == max(air_temp, na.rm = TRUE))
 
 min_temp <- site_data  |>
   mutate(date = lubridate::as_date(date_time)) |>
-  filter(air_temp == min(air_temp))
+  filter(air_temp == min(air_temp, na.rm = TRUE))
 
 temp_range <- site_data |>
   mutate(date = lubridate::as_date(date_time)) |>
   group_by(date) |>
-  summarise(min_temp = min(air_temp),
-            max_temp = max(air_temp),
+  summarise(min_temp = min(air_temp, na.rm = TRUE),
+            max_temp = max(air_temp, na.rm = TRUE),
             observation_period = first(observation_period))
 
 plot_temp_2 <- ggplot() +
@@ -870,18 +925,42 @@ plot_temp_2 <- ggplot() +
 
 ```{r rain_graph2, echo = FALSE}
 
+site_data_rain <- input_data_rain |> 
+  filter(site_name_title == all_names[2])
+
+## Identify unmonitored periods and separate
+site_data_unmonitored <- input_data |> 
+  filter(site_name_title == all_names[2] & !rainfall) |> 
+  mutate(timediff = c(30, as.numeric(diff(date_time))),
+         group = c(1, rep(NA_real_, times = (n() - 1))))
+
+site_data_unmonitored[site_data_unmonitored$timediff > 60, ]$group <- (1:sum(site_data_unmonitored$timediff > 60) + 1)
+
+site_data_unmonitored <- site_data_unmonitored |> 
+  tidyr::fill(group, .direction = "down") |> 
+  group_by(group) |> 
+  summarise(start = min(date_time),
+            end = max(date_time)) |> 
+  tidyr::pivot_longer(cols = c(start, end))
+
 #Determine mean of each day from across both stations
-daily_sum <- site_data |>
-  mutate(date = lubridate::as_date(date_time)) |>
-  group_by(date) |>
-  summarise(total_rain = sum(precip)) |>
+daily_sum <- site_data_rain |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
+  summarise(total_rain = sum(precip, na.rm = TRUE)) |> 
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
 
-max_rain <- daily_sum |>
-  filter(total_rain == max(total_rain)) |> 
+max_rain <- daily_sum |> 
+  filter(total_rain == max(total_rain, na.rm = TRUE)) |> 
   slice(1)
 
+rain_limit <- 140
+
 plot_rain_2 <- ggplot() +
+  geom_area(data = site_data_unmonitored,
+              aes(x = value, y = rain_limit, group = group,
+                  fill = "No data collected"),
+            alpha = 0.5, colour = NA) +
   geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
   geom_richtext(data = max_rain, aes(x = date_time - lubridate::days(20), y = total_rain + 5,
                                      label = glue::glue("<span style='color:#1434A4; font-size:15pt'>**{rain}mm**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded daily rainfall<br>{date}</span>",
@@ -890,12 +969,13 @@ plot_rain_2 <- ggplot() +
   # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
   #                                   xend = date_time, yend = total_rain)) +
   geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
+  scale_fill_manual(values = "grey70", name = NULL) +
   scale_x_datetime(name = "", date_labels = "%d/%m/%Y", limits = c(as.POSIXct(NA), Sys.Date() + 10)) +
+  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, rain_limit), breaks = seq(0, 125, 25), expand = c(0, 0)) +
   labs(caption = paste0("Data: ", all_names[2], " weather station collected at 30 min intervals")) +
-  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
   theme_classic() +
-  theme(legend.position = "none",
+  theme(legend.position = "bottom",
         axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
         axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
         axis.line = element_line(colour = "grey10"),
@@ -918,14 +998,14 @@ plot_temp_2 + plot_rain_2 + patchwork::plot_annotation(tag_levels = "A", tag_suf
 ```{r temp_graph3, echo = FALSE}
 
 #Site data
-site_data <- input_data |>
+site_data <- input_data_temp |>
   filter(site_name_title == all_names[3])
 
 #Determine mean of each day from across both stations
 daily_mean <- site_data |>
   mutate(date = lubridate::as_date(date_time)) |>
   group_by(date) |>
-  summarise(daily_mean = mean(air_temp),
+  summarise(daily_mean = mean(air_temp, na.rm = TRUE),
             observation_period = first(observation_period)) |>
   slice(-n())
 
@@ -981,32 +1061,57 @@ plot_temp_3 <- ggplot() +
 
 ```{r rain_graph3, echo = FALSE}
 
+site_data_rain <- input_data_rain |> 
+  filter(site_name_title == all_names[3])
+
+## Identify unmonitored periods and separate
+site_data_unmonitored <- input_data |> 
+  filter(site_name_title == all_names[3] & !rainfall) |> 
+  mutate(timediff = c(30, as.numeric(diff(date_time))),
+         group = c(1, rep(NA_real_, times = (n() - 1))))
+
+site_data_unmonitored[site_data_unmonitored$timediff > 60, ]$group <- (1:sum(site_data_unmonitored$timediff > 60) + 1)
+
+site_data_unmonitored <- site_data_unmonitored |> 
+  tidyr::fill(group, .direction = "down") |> 
+  group_by(group) |> 
+  summarise(start = min(date_time),
+            end = max(date_time)) |> 
+  tidyr::pivot_longer(cols = c(start, end))
+
 #Determine mean of each day from across both stations
-daily_sum <- site_data |>
-  mutate(date = lubridate::as_date(date_time)) |>
-  group_by(date) |>
-  summarise(total_rain = sum(precip)) |>
+daily_sum <- site_data_rain |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
+  summarise(total_rain = sum(precip, na.rm = TRUE)) |> 
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
 
-max_rain <- daily_sum |>
-  filter(total_rain == max(total_rain)) |> 
+max_rain <- daily_sum |> 
+  filter(total_rain == max(total_rain, na.rm = TRUE)) |> 
   slice(1)
 
+rain_limit <- 140
+
 plot_rain_3 <- ggplot() +
+  geom_area(data = site_data_unmonitored,
+              aes(x = value, y = rain_limit, group = group,
+                  fill = "No data collected"),
+            alpha = 0.5, colour = NA) +
   geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
-  geom_richtext(data = max_rain, aes(x = date_time + lubridate::days(20), y = total_rain + 5,
+  geom_richtext(data = max_rain, aes(x = date_time - lubridate::days(20), y = total_rain + 5,
                                      label = glue::glue("<span style='color:#1434A4; font-size:15pt'>**{rain}mm**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded daily rainfall<br>{date}</span>",
                                                         rain = total_rain, date = format(date_time, "%d/%m/%Y"))),
                 fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
   # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
   #                                   xend = date_time, yend = total_rain)) +
   geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
+  scale_fill_manual(values = "grey70", name = NULL) +
   scale_x_datetime(name = "", date_labels = "%d/%m/%Y", limits = c(as.POSIXct(NA), Sys.Date() + 10)) +
-  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
+  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, rain_limit), breaks = seq(0, 125, 25), expand = c(0, 0)) +
   labs(caption = paste0("Data: ", all_names[3], " weather station collected at 30 min intervals")) +
   coord_cartesian(clip = "off") +
   theme_classic() +
-  theme(legend.position = "none",
+  theme(legend.position = "bottom",
         axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
         axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
         axis.line = element_line(colour = "grey10"),
@@ -1029,14 +1134,14 @@ plot_temp_3 + plot_rain_3 + patchwork::plot_annotation(tag_levels = "A", tag_suf
 ```{r temp_graph4, echo = FALSE}
 
 #Site data
-site_data <- input_data |>
+site_data <- input_data_temp |>
   filter(site_name_title == all_names[4])
 
 #Determine mean of each day from across both stations
 daily_mean <- site_data |>
   mutate(date = lubridate::as_date(date_time)) |>
   group_by(date) |>
-  summarise(daily_mean = mean(air_temp),
+  summarise(daily_mean = mean(air_temp, na.rm = TRUE),
             observation_period = first(observation_period))
 
 max_temp <- site_data  |>
@@ -1090,32 +1195,58 @@ plot_temp_4 <- ggplot() +
 
 ```{r rain_graph4, echo = FALSE}
 
+site_data_rain <- input_data_rain |> 
+  filter(site_name_title == all_names[4])
+
+## Identify unmonitored periods and separate
+site_data_unmonitored <- input_data |> 
+  filter(site_name_title == all_names[4] & !rainfall) |> 
+  mutate(timediff = c(30, as.numeric(diff(date_time))),
+         group = c(1, rep(NA_real_, times = (n() - 1))))
+
+site_data_unmonitored[site_data_unmonitored$timediff > 60, ]$group <- (1:sum(site_data_unmonitored$timediff > 60) + 1)
+
+site_data_unmonitored <- site_data_unmonitored |> 
+  tidyr::fill(group, .direction = "down") |> 
+  group_by(group) |> 
+  summarise(start = min(date_time),
+            end = max(date_time)) |> 
+  tidyr::pivot_longer(cols = c(start, end))
+
 #Determine mean of each day from across both stations
-daily_sum <- site_data |>
-  mutate(date = lubridate::as_date(date_time)) |>
-  group_by(date) |>
-  summarise(total_rain = sum(precip)) |>
+daily_sum <- site_data_rain |> 
+  mutate(date = lubridate::as_date(date_time)) |> 
+  group_by(date) |> 
+  summarise(total_rain = sum(precip, na.rm = TRUE)) |> 
   mutate(date_time = lubridate::ymd_hms(paste(date, "12:00:00"), tz = "Africa/Dar_es_Salaam"))
 
-max_rain <- daily_sum |>
-  filter(total_rain == max(total_rain)) |> 
+max_rain <- daily_sum |> 
+  filter(total_rain == max(total_rain, na.rm = TRUE)) |> 
   slice(1)
 
+rain_limit <- 140
+
 plot_rain_4 <- ggplot() +
+  geom_area(data = site_data_unmonitored,
+              aes(x = value, y = rain_limit, group = group,
+                  fill = "No data collected"),
+            alpha = 0.5, colour = NA) +
   geom_col(data = daily_sum, aes(x = date_time, y = total_rain), fill = "#1434A4", alpha = 0.75) +
-  geom_richtext(data = max_rain, aes(x = date_time - lubridate::days(5), y = total_rain + 10,
+  geom_richtext(data = max_rain, aes(x = date_time - lubridate::days(20), y = total_rain + 5,
                                      label = glue::glue("<span style='color:#1434A4; font-size:15pt'>**{rain}mm**</span><br><span style='color:grey25; font-size:9pt'>Highest recorded daily rainfall<br>{date}</span>",
                                                         rain = total_rain, date = format(date_time, "%d/%m/%Y"))),
                 fill = NA, label.color = NA, family = "Montserrat500", lineheight = 0.5) +
   # geom_segment(data = max_rain, aes(x = date_time - lubridate::days(8), y = total_rain + 2,
   #                                   xend = date_time, yend = total_rain)) +
   geom_point(data = max_rain, aes(x = date_time, y = total_rain), size = 2, colour = "#1434A4") +
+  scale_fill_manual(values = "grey70", name = NULL) +
   scale_x_datetime(name = "", date_labels = "%d/%m/%Y", limits = c(as.POSIXct(NA), Sys.Date() + 10)) +
-  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, 140), breaks = seq(0, 125, 25), expand = c(0, 0)) +
+  scale_y_continuous(name = "Daily rainfall (mm)", limits = c(0, rain_limit), breaks = seq(0, 125, 25), expand = c(0, 0)) +
   labs(caption = paste0("Data: ", all_names[4], " weather station collected at 30 min intervals")) +
   coord_cartesian(clip = "off") +
   theme_classic() +
-  theme(legend.position = "none",
+  theme(legend.position = "bottom",
+        axis.text = element_text(size = 14, family = "Montserrat400", colour = "grey10"),
         axis.title = element_text(size = 16, family = "Montserrat400", face = "bold", colour = "grey10"),
         axis.line = element_line(colour = "grey10"),
         plot.caption = element_text(hjust = 0))
