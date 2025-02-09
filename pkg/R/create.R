@@ -50,23 +50,54 @@ create_weather_raw.table <- function(input.folder){
 
   })
 
-  ### Join in activity dates and filter
+  ## Load weather activity data
+  weather_station_activity <- create_station_activity.log(input.folder)
+
+  ## Create two new columns logical columns with 'temperature' and 'rainfall'
+  ## When these are FALSE, the data should be used
   weather_data_active <- purrr::map(.x = weather_data, .f = function(station){
 
     station |>
-      ## Join relationship is many-to-many (multiple records per station/site and multiple activity periods)
-      dplyr::left_join(weather_station_activity, by = c("station_name", "site_name"), relationship = "many-to-many") |>
-      dplyr::filter(lubridate::as_date(.data$date_time) > .data$start_date & lubridate::as_date(.data$date_time) < .data$end_date) |>
-      dplyr::select(-"start_date", -"end_date", -"comment")
+      dplyr::mutate(date = lubridate::as_date(.data$date_time)) |>
+      ## Join in activity periods for
+      fuzzyjoin::fuzzy_left_join(weather_station_activity$activity_log |>
+                                   sf::st_drop_geometry(),
+                                 by = c("station_name" = "station_name",
+                                        "site_name" = "site_name",
+                                        "date" = "start_date",
+                                        "date" = "end_date"),
+                                 match_fun = list(`==`,
+                                                  `==`,
+                                                  `>`,
+                                                  `<`)) |>
+      ## Remove the other join cols (they are kept by default in fuzzy join)
+      dplyr::rename(station_name = station_name.x,
+                    site_name = site_name.x) |>
+      ## Then deal with cleaning days (this is only relevant for rainfall)
+      ## We expect many-to-many because there are multiple cleanings per site (and multiple records in a day)
+      dplyr::left_join(weather_station_activity$cleaning_log,
+                       by = c("site_name",
+                              "date" = "cleaning_date"), relationship = "many-to-many") |>
+      ## Define whether rainfall and temperature are true
+      dplyr::mutate(temperature = dplyr::case_when(is.na(temperature) ~ FALSE,
+                                            TRUE ~ temperature),
+                    rainfall = dplyr::case_when(is.na(rainfall) ~ FALSE,
+                                                action == "cleaned" ~ FALSE,
+                                         TRUE ~ rainfall)) |>
+      dplyr::select(station_name:file_number, temperature, rainfall, observation_period)
 
-  })
-
-  weather_data_active <- dplyr::bind_rows(weather_data_active) |>
+  }) |>
+    dplyr::bind_rows() |>
     #Split date and time columns and treat as characters. This way they can be easily stored in db
     #And easily re-compiled when loading db in R
-    tidyr::separate(col = .data$date_time, into = c("date", "time"), sep = " ", convert = TRUE)
+    tidyr::separate(col = .data$date_time, into = c("date", "time"), sep = " ", convert = TRUE) |>
+    ## When separating midnight, 00:00 is actually coded as NA and so the time is lost!
+    dplyr::mutate(time = tidyr::replace_na(time, "00:00:00"))
 
-  return(dplyr::tibble(name = c("weather", "weather_metadata"), data = list(weather_data_active, weather_metadata), datecheck = TRUE)) ## no date check necessary
+  ## Midnight is still included here...
+
+  return(dplyr::tibble(name = c("weather", "weather_metadata"), data = list(weather_data_active,
+                                                                            weather_metadata), datecheck = TRUE)) ## no date check necessary
 
 }
 
@@ -166,20 +197,26 @@ create_crater_weather.table <- function(from = NULL, to = NULL, at = NULL,
   variable <- check_function_arg.variable.weather(variable)
 
   ## Create summary table
+  ## Midnight disappears here somehow?!
   weather_data <- hyenaR::extract_database_table("weather") |>
     ## Combine to a date time file (we separate them for saving as .csv for output)
     dplyr::mutate(date_time = lubridate::ymd_hms(paste(.data$date, .data$time, sep = " "),
-                                                tz = "Africa/Dar_es_Salaam"))
+                                                 tz = "Africa/Dar_es_Salaam"))
 
-  focal_station_activity <- weather_station_activity |>
-    dplyr::filter(.data$station_name %in% !!station & .data$site_name %in% !!location)
+  ## We can determine this from when temp and weather are available
+  focal_station_activity <- weather_data |>
+    dplyr::filter(temperature | rainfall) |>
+    dplyr::mutate(date = lubridate::as_date(date))
+
+    # weather_station_activity |>
+    # dplyr::filter(.data$station_name %in% !!station & .data$site_name %in% !!location)
 
   ## Data are already subset to only include the active period of each station (e.g. exclude periods of repair)
   ## Therefore, if from/to/at not provided just use Inf!
   date_range <- hyenaR::check_function_arg.date.fromtoat(from, to, at,
                                                          .fill = TRUE,
-                                                         min.date = min(focal_station_activity$start_date),
-                                                         max.date = max(focal_station_activity$end_date),
+                                                         min.date = min(focal_station_activity$date),
+                                                         max.date = max(focal_station_activity$date),
                                                          arg.max.length = 1L, data.type = "weather")
 
   ## Convert to POSIXct so we can compare to date-time data
@@ -191,8 +228,50 @@ create_crater_weather.table <- function(from = NULL, to = NULL, at = NULL,
     dplyr::select("site_name", "station_name", "date_time", "latitude", "longitude",
                   ## Need perl = TRUE to accept lookahead regex
                   dplyr::matches(variable, perl = TRUE),
+                  "temperature", "rainfall",
                   "observation_period")
 
   output
+
+}
+
+#' Create a table of weather station activity
+#'
+#' @inheritParams arguments
+#'
+#' @return List containing two items: activity_log (summary of active
+#' periods for each weather station) and cleaning_log (table of days
+#' when station was cleaned)
+#' @export
+create_station_activity.log <- function(input.folder, ...){
+
+  ## Expect two new files in the raw data
+  ## - station_cleaning_log.csv: contains info on discrete activity periods
+  ## This replaces the existing weather_station_activity.rda
+  ## It can be used to record extended breaks in data collection, for one
+  ## or both gauges. It can also be used to record change of position for the
+  ## station.
+  ## - station_cleaning_log.csv: contains information on individual checks and cleaning
+  ## routine. This will lead to single day gaps in the data.
+
+  activity_log <- suppressWarnings({read.csv(file.path(input.folder, "station_activity.csv")) |>
+      ## Inf is replaced by max and min dates outside of possible range
+      dplyr::mutate(start_date = tidyr::replace_na(lubridate::dmy(start_date, quiet = TRUE), lubridate::ymd("1990-01-01")),
+                    end_date = tidyr::replace_na(lubridate::dmy(end_date, quiet = TRUE), lubridate::ymd(Sys.Date()) + 1)) |>
+      sf::st_as_sf(coords = c("longitude", "latitude"), crs = "EPSG:4326")
+  })
+
+  cleaning_log <- suppressWarnings({
+    read.csv(file.path(input.folder, "station_cleaning_log.csv")) |>
+      dplyr::mutate(cleaning_date = lubridate::dmy(date)) |>
+      dplyr::filter(action == "cleaned") |>
+      dplyr::select(site_name, cleaning_date, action)
+  })
+
+  output <- list(activity_log = activity_log,
+                 cleaning_log = cleaning_log)
+
+  return(output)
+
 
 }
