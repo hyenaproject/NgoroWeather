@@ -94,8 +94,6 @@ create_weather_raw.table <- function(input.folder){
     ## When separating midnight, 00:00 is actually coded as NA and so the time is lost!
     dplyr::mutate(time = tidyr::replace_na(time, "00:00:00"))
 
-  ## Midnight is still included here...
-
   return(dplyr::tibble(name = c("weather", "weather_metadata"), data = list(weather_data_active,
                                                                             weather_metadata), datecheck = TRUE)) ## no date check necessary
 

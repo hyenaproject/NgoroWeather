@@ -31,7 +31,6 @@ library(patchwork)
 library(sf)
 library(showtext)
 library(kableExtra)
-
 ```
 
 ```{r knitr_opts, include = FALSE}
