@@ -45,5 +45,6 @@ Imports:
     forcats,
     scales,
     binom,
-    glue
+    glue,
+    fuzzyjoin
 RoxygenNote: 7.3.1
