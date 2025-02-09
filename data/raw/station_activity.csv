@@ -1,0 +1,13 @@
+﻿station_name,site_name,start_date,end_date,observation_period,comment,latitude,longitude,temperature,rainfall
+jua,ngoitokitok,29/9/2021,19/2/2022,1,Removed due to hyena damage,-3.209525,35.60065,TRUE,TRUE
+jua,ngoitokitok,26/3/2022,8/12/2024,2,Reinstalled,-3.209525,35.60065,TRUE,TRUE
+jua,ngoitokitok,8/12/2024,11/1/2025,3,Rain gauge being repaired after damage,-3.209525,35.60065,TRUE,FALSE
+jua,ngoitokitok,11/1/2025,Inf,4,Both gauges should be funcational again,-3.209525,35.60065,TRUE,TRUE
+upepo,acacia,28/9/2021,26/3/2022,5,Issues with firmware,-3.232544,35.50952,TRUE,TRUE
+upepo,acacia,28/3/2022,Inf,6,Reinstalled,-3.232544,35.50952,TRUE,TRUE
+unyevu,jackal_hill,30/3/2022,23/1/2023,7,Rain gauge broken by animals,-3.132779,35.52252,TRUE,TRUE
+unyevu,jackal_hill,23/1/2023,21/3/2024,8,"Temperature gauge still functional, rain gauge damaged. Temperature gauge seems to have malfunctioned after heavy rain.",-3.132779,35.52252,TRUE,FALSE
+unyevu,jackal_hill,8/4/2024,16/7/2024,9,Temperature gauge functioning again for a short period.,-3.132779,35.52252,TRUE,FALSE
+unyevu,jackal_hill,22/11/2024,12/1/2025,10,Rain gauge replaced but temperature sensor had some problems,-3.132779,35.52252,FALSE,TRUE
+unyevu,jackal_hill,11/1/2025,Inf,11,Issue with temperature gauge vanished. Both are now working.,-3.132779,35.52252,TRUE,TRUE
+mvua,lemala_rim,31/3/2022,Inf,12,NA,-3.142201,35.68661,TRUE,TRUE
