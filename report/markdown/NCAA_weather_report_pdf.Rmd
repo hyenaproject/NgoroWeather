@@ -61,7 +61,7 @@ load_package_database.weather(input.folder = "../../data/raw",
                               overwrite.db = "yes")
 ```
 
-```{r}
+```{r load_activity_logs, include=FALSE}
 weather_station_activity <- create_station_activity.log("../../data/raw")
 ```
 
