@@ -338,12 +338,14 @@ load_data_weatherstation.all <- function(input.folder, verbose = TRUE) {
 
   duplicates <- output |>
     dplyr::group_by(.data$date_time) |>
-    dplyr::mutate(n = dplyr::n()) |>
-    dplyr::filter(.data$n > 1)
+    dplyr::filter(dplyr::n() > 1)
 
   if (nrow(duplicates) > 0) {
 
-    stop("There is contradictory data for a given date-time")
+    station <- unique(duplicates$site_name)
+    unique_datetimes <- unique(duplicates$date_time)
+
+    stop(paste0("There is contradictory data at ", station, " at the following date-time:\n", paste(unique_datetimes, collapse = "\n")))
 
   }
 
